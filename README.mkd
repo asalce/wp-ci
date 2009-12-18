@@ -1,15 +1,15 @@
 #Introduction to WP-CI
 
-I love WordPress. But writing plug-ins for WordPress sucks.  There are a lot of plug-ins out there, all of them using WordPress' smashing plugin API to create some great functionality.  But at the end of the day, the native API leaves me wanting more.
+I love Wordpress. But writing plug-ins for Wordpress could be easier and more structured.  There are a lot of plug-ins out there, all of them using Wordpress' smashing plugin API to create some great functionality.  But at the end of the day, the native API leaves me wanting more.
 
-* I want to develop WordPress plug-ins using MVC principles.
+* I want to develop Wordpress plug-ins using MVC principles.
 * I want for security to be easy to remember and easy to implement.
 * I want to be able to write plug-ins that provide body content on the front-end with minimal modification to my themes.
 * I want to be able to utilize AJAX without implementing esoteric, hack-like features in my plug-in.
 
 And I don't want to have to refer to the gigantic Codex every time I need to one-off a new project: give me a manageable API.
 
-With these goals in mind, I have written a plug-in for WordPress that creates a new plug-in framework.  This framework, based on CodeIgniter, has far exceeded my personal expectations for the project (and it's still in alpha!).  Not only did I manage to satisfy my own requirements, I managed to do so without hacking either of the proven stacks, all while taking advantage of some very cool features of PHP 5 (annotations).
+With these goals in mind, I have written a plug-in for Wordpress that creates a new plug-in framework. This framework, based on CodeIgniter, has far exceeded my personal expectations for the project (and it's still in alpha!).  Not only did I manage to satisfy my own requirements, I managed to do so without hacking either of the proven stacks.
 
 ##Early Adopters Beware
 
