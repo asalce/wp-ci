@@ -43,6 +43,8 @@ if (!class_exists('clAPI')) require_once(WPCI_ROOT.'/lib/coreylib/coreylib.php')
 
 if (!class_exists('Spyc')) require_once(WPCI_ROOT.'/lib/spyc/spyc.php');
 
+if (!class_exists('Annotations')) require_once(WPCI_ROOT.'/lib/annotations.php');
+
 // load the hacks file, if it exists, allowing for pluggable overrides.
 if (file_exists(WPCI_ROOT.'/hacks.php')) require_once(WPCI_ROOT.'/hacks.php');
 
@@ -54,6 +56,7 @@ require_once(WPCI_ROOT.'/hooks/activation.php');
 require_once(WPCI_ROOT.'/hooks/rewrite.php');
 require_once(WPCI_ROOT.'/hooks/content.php');
 require_once(WPCI_ROOT.'/hooks/menus.php');
+
 
 // bootstrap CodeIgniter
 require_once(WPCI_ROOT.'/bootstrap.php');

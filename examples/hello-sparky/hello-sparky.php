@@ -28,4 +28,6 @@ Author URI: http://aaroncollegeman.com
 */
 
 add_action('wpci_register_apps', 'sparky_register_app');
-function sparky_register_app() { WPCI::register_app(__FILE__); }
+function sparky_register_app() { 
+	WPCI::register_app(__FILE__); 
+}

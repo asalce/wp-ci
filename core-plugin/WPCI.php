@@ -24,7 +24,9 @@
  */
 class WPCI {
 	
-	private static $apps = array();
+	static $apps = array();
+	
+	static $admin_menus = array();
 	
 	private static $active_app;
 	
@@ -91,12 +93,15 @@ class WPCI {
 		$app_name = substr(basename($plugin_file), 0, strrpos(basename($plugin_file), '.'));
 		log_message('debug', "Registering pluggable application: [$app_name]");
 		$app_path = realpath(dirname($plugin_file)).'/application/';
-		if (file_exists($app_path) && is_dir($app_path))
+		if (file_exists($app_path) && is_dir($app_path)) {
 			self::$apps[$app_name] = $app_path;
-		else
+		}
+		else {
 			wp_die("Plugin <b>$plugin_file</b> is not a valid pluggable CI application: missing folder <b>$app_path</b>.");
+		}
 	}
-
+	
+	
 	/**
 	 * Locate and load the PHP file to handle this CI request.
 	 * @return If found, the path to the controller file.
@@ -122,6 +127,81 @@ class WPCI {
 			wp_die('Unable to load default controller. Please make sure the controller specified in routes.php file is valid.');
 			
 		return $the_path;
+	}
+
+	static function add_menu($app, $path, $class, $method_name, $annotations) {
+		$args = wp_parse_args($annotations['menu'], array(
+			'page_title' => 'My Menu',
+			'menu_title' => '',
+			'position' => null,
+			'capability' => ''
+		));
+		
+		if (!$args['menu_title'])
+			$args['menu_title'] = $args['page_title'];
+			
+		if (!$args['capability'] && isset($annotations['user_can']))
+			$args['capability'] = $annotations['user_can'];
+		else
+			$args['capability'] = 'administrator'; // maybe overkill... ?
+			
+		$token = "wp-ci/$app/$method_name";
+		
+		if (!isset(self::$admin_menus[$app]))
+			$admin_menus[$app] = array();
+		
+		if (!isset(self::$admin_menus[$class]))
+			$admin_menus[$class] = array();
+		
+		self::$admin_menus[$app][$class][$method_name] = $token;
+		self::$admin_menus[$token] = array('app' => $app, 'app_path' => $path, 'class' => $class, 'method_name' => $method_name);
+		
+		add_menu_page($args['page_title'], $args['page_title'], $args['capability'], $token, array('WPCI', 'execute_admin_fx'), '', $args['position']);
+		
+		if ($args['page_title'] != $args['menu_title'])
+			add_submenu_page($token, $args['page_title'], $args['menu_title'], $args['capability'], $token, array('WPCI', 'execute_admin_fx'));	
+	}
+	
+	static function add_submenu($app, $path, $class, $method_name, $annotations) {
+		$args = wp_parse_args($annotations['submenu'], array(
+			'page_title' => 'My Menu Item',
+			'menu_title' => '',
+			'capability' => '',
+			'parent' => ''
+		));
+		
+		if (!$args['menu_title'])
+			$args['menu_title'] = $args['page_title'];
+			
+		if (!$args['capability'] && isset($annotations['user_can']))
+			$args['capability'] = $annotations['user_can'];
+		else
+			$args['capability'] = 'administrator'; // maybe overkill... ?
+			
+		$token = "wp-ci/$app/$method_name";
+	
+		if (!isset(self::$admin_menus[$app]))
+			$admin_menus[$app] = array();
+		
+		if (!isset(self::$admin_menus[$class]))
+			$admin_menus[$class] = array();
+		
+		self::$admin_menus[$app][$class][$method_name] = $token;
+		self::$admin_menus[$token] = array('app' => $app, 'app_path' => $path, 'class' => $class, 'method_name' => $method_name);
+		
+		if ($args['parent']) {
+			if (stripos($args['parent'], '.php') == strlen($args['parent'])-4) // specific WordPress menu...
+				$parent_token = $args['parent'];
+			else
+				$parent_token = self::$admin_menus[$app][$class][$args['parent']];
+		
+			add_submenu_page($parent_token, $args['page_title'], $args['menu_title'], $args['capability'], $token, array('WPCI', 'execute_admin_fx'));	
+		}
+	}
+	
+	static function execute_admin_fx() {
+		global $OUT;
+		echo $OUT->_display();
 	}
 	
 }

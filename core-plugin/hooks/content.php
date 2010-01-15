@@ -52,12 +52,41 @@ function wpci_the_content($content) {
 	}
 }
 
-add_action('plugins_loaded', 'wpci_buffer_ci_response');
-function wpci_buffer_ci_response() {
+add_action('admin_init', 'wpci_admin_init');
+function wpci_admin_init() {
+	global $CI;
+	
+	if ($token = $_REQUEST['page']) {
+		// exact match for token?
+		if (isset(WPCI::$admin_menus[$token])) {
+			// load the menu settings
+			$menu = WPCI::$admin_menus[$token];
+			// load the application controller
+			$app_path = $menu['app_path'];
+			require_once($app_path);
+			// tell WPCI which app is active
+			WPCI::activate($menu['app']);
+			// create an instance of the controller
+			$class = $menu['class'];
+			$CI = new $class();
+			
+			require_once(BASEPATH.'database/DB'.EXT);
+			
+			call_user_func_array(array(&$CI, $menu['method_name']), array());
+		}
+	}
+}
+
+add_action('plugins_loaded', 'wpci_plugins_loaded');
+function wpci_plugins_loaded() {
 	global $RTR, $CI, $EXT, $BM, $URI;
 	
 	// call upon pluggable applications to register themsevles
 	do_action('wpci_register_apps');
+	
+	if (is_admin()) {
+		return false;
+	}
 	
 	// set routing, triggering detection of active application (if any)
 	$RTR->_set_routing();

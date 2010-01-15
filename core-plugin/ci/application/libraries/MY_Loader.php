@@ -262,6 +262,7 @@ class MY_Loader extends CI_Loader {
 			
 			// one change here to support active application concept
 			$_ci_path = (WPCI::active_app_path()).'/views/'.$_ci_file;
+			
 		}
 		else
 		{

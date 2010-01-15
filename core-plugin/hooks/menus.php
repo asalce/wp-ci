@@ -19,4 +19,52 @@
  */
 
 add_action('admin_menu', 'wpci_admin_menu');
-function wpci_admin_menu() {}
+function wpci_admin_menu() {
+	// add menu item for WP-CI
+	add_options_page('WP-CI', 'WP-CI', 'administrator', 'wp-ci', array('WPCI', 'execute_admin_fx'));
+	
+	// add menus for all applications (via annotations)
+	foreach(WPCI::$apps as $app => $app_path)
+		wpci_process_admin_annotations($app, $app_path);
+}
+
+function wpci_process_admin_annotations($app, $app_path) {
+	$dir = opendir($app_path);
+	
+	while(($entry = readdir($dir)) !== false) {
+		
+		if ($entry != '.' && $entry != '..') {
+			
+			if (is_dir("$app_path/$entry")) {
+				wpci_process_admin_annotations($app, "$app_path/$entry");
+			}
+			
+			else if (stripos($entry, '.php') == strlen($entry)-4) {
+				$class = split("\.", $entry);
+				$class = $class[0];
+				
+				Annotations::addClass($class, "$app_path/$entry");
+				
+				$ann = Annotations::get($class);
+				if (isset($ann['methods'])) {
+					foreach($ann['methods'] as $method_name => $method) {
+						
+						// administrative menus
+						if (isset($method['menu'])) {
+							WPCI::add_menu($app, "$app_path/$entry", $class, $method_name, $method);
+						}
+						
+						// submenus
+						if (isset($method['submenu'])) {
+							WPCI::add_submenu($app, "$app_path/$entry", $class, $method_name, $method);
+						}
+						
+					}
+				}
+				
+			}
+		}
+	}
+	
+	closedir($dir);
+}
