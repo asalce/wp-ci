@@ -70,8 +70,6 @@ function wpci_admin_init() {
 			$class = $menu['class'];
 			$CI = new $class();
 			
-			require_once(BASEPATH.'database/DB'.EXT);
-			
 			call_user_func_array(array(&$CI, $menu['method_name']), array());
 		}
 	}

@@ -145,7 +145,7 @@ class WPCI {
 		else
 			$args['capability'] = 'administrator'; // maybe overkill... ?
 			
-		$token = "wp-ci/$app/$method_name";
+		$token = "wp-ci/$app/$class/$method_name";
 		
 		if (!isset(self::$admin_menus[$app]))
 			$admin_menus[$app] = array();
@@ -178,7 +178,7 @@ class WPCI {
 		else
 			$args['capability'] = 'administrator'; // maybe overkill... ?
 			
-		$token = "wp-ci/$app/$method_name";
+		$token = "wp-ci/$app/$class/$method_name";
 	
 		if (!isset(self::$admin_menus[$app]))
 			$admin_menus[$app] = array();
