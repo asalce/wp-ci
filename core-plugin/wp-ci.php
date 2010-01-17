@@ -35,7 +35,7 @@ if (!defined('WPCI_FILE'))
 if (!defined('WPCI_ROOT'))
 	define('WPCI_ROOT', dirname(__FILE__));
 
-// CodeIgniter namespace
+// WP-CI plugin
 require_once(WPCI_ROOT.'/WPCI.php');
 
 // load dependencies and support libraries
@@ -57,8 +57,8 @@ require_once(WPCI_ROOT.'/hooks/rewrite.php');
 require_once(WPCI_ROOT.'/hooks/content.php');
 require_once(WPCI_ROOT.'/hooks/menus.php');
 
-
 // bootstrap CodeIgniter
 require_once(WPCI_ROOT.'/bootstrap.php');
 
+WPCI::log('debug', '***** WP-CI Loaded. Yippie! *********************');
 

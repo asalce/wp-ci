@@ -55,6 +55,8 @@ class Annotations {
 		// class is always first argument
 		$class = array_shift($args);
 		
+		$annotation = null;
+		
 		// if two arguments remain, then we're looking for a method annotations
 		if (count($args) > 1) {
 			$method = $args[0];
@@ -83,6 +85,8 @@ class Annotations {
 		// class is always first argument
 		$class = array_shift($args);
 		
+		$annotation = null;
+		
 		// if two arguments remain, then we're looking for a method annotations
 		if (count($args) > 1) {
 			$method = $args[0];
@@ -97,7 +101,7 @@ class Annotations {
     	// make sure the annotations for this class have been processed
 		self::process($class);
     
-    	// return all annotations if not specific ones are mentioned.
+		// return all annotations if not specific ones are mentioned.
 	    if (!$annotation)
 	      	return self::$cache[$class];
       
@@ -155,7 +159,8 @@ class Annotations {
         
 		        // get function/class name
 		        $define = explode(" ", trim($matches[6][$i]));
-		        $define[1] = preg_replace("/([^_\w]+).*$/", "", $define[1]); // clean up function/class name
+				if (isset($define[1]))
+		        	$define[1] = preg_replace("/([^_\w]+).*$/", "", $define[1]); // clean up function/class name
         
 		        // store our annotations into the proper array
 		        if ($define[0] == 'class') {

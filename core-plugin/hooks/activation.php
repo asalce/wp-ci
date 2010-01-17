@@ -19,9 +19,10 @@
  */
 
 // on activation, make sure our gateway page is installed
-register_activation_hook(__FILE__, 'wpci_activate');
+add_action('activate_wp-ci/wp-ci.php', 'wpci_activate');
 function wpci_activate() {
-
+	WPCI::log('info', 'wpci_activate()');
+	
 	if (!($slug = get_option('wpci_gateway_slug', false))) {
 		
 		do {
@@ -44,14 +45,18 @@ function wpci_activate() {
 // make sure that our gateway page doesn't show up in standard page lists
 add_filter('wp_list_pages_excludes', 'wpci_list_pages_excludes');
 function wpci_list_pages_excludes($exclude) {
+	WPCI::log('info', 'wp_list_pages_excludes()');
+	
 	$gateway = wpci_get_gateway();
 	$exclude[] = $gateway->ID;
 	return $exclude;
 }
 
 // on deactivation, remove our gateway page
-register_deactivation_hook(__FILE__, 'wpci_deactivate');
+add_action('deactivate_wp-ci/wp-ci.php', 'wpci_deactivate');
 function wpci_deactivate() {
+	WPCI::log('info', 'wpci_deactivate()');
+	
 	// remove our gateway page, otherwise it'll show up in page lists
 	if ($page = wpci_get_gateway()) {
 		wp_delete_post($page->ID);

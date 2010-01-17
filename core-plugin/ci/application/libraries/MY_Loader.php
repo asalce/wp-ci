@@ -1,4 +1,23 @@
 <?php
+/**
+ * WP-CI The CodeIgniter plugin for WordPress.
+ * Copyright (C)2009-2010 Collegeman.net, LLC.
+ * 
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ */
+
 class MY_Loader extends CI_Loader {
 	
 	/**
@@ -102,6 +121,7 @@ class MY_Loader extends CI_Loader {
 	 */
 	function helper($helpers = array())
 	{
+		
 		if ( ! is_array($helpers))
 		{
 			$helpers = array($helpers);
@@ -117,7 +137,7 @@ class MY_Loader extends CI_Loader {
 			}
 			
 			// Is this a helper extension request?			
-			if (file_exists($ext_helper = WPCI::active_app_path(FALSE).'helpers/'.config_item('subclass_prefix').$helper.EXT))
+			if (file_exists($ext_helper = WPCI::active_app_path(FALSE).'/helpers/'.config_item('subclass_prefix').$helper.EXT))
 			{
 				$base_helper = BASEPATH.'helpers/'.$helper.EXT;
 				
@@ -129,9 +149,9 @@ class MY_Loader extends CI_Loader {
 				include_once($ext_helper);
 				include_once($base_helper);
 			}
-			elseif (file_exists(WPCI::active_app_path(FALSE).'helpers/'.$helper.EXT))
+			elseif (file_exists(WPCI::active_app_path(FALSE).'/helpers/'.$helper.EXT))
 			{ 
-				include_once(WPCI::active_app_path(FALSE).'helpers/'.$helper.EXT);
+				include_once(WPCI::active_app_path(FALSE).'/helpers/'.$helper.EXT);
 			}
 			
 			// Is this a helper extension request?			
@@ -323,6 +343,8 @@ class MY_Loader extends CI_Loader {
 		// do a little string replacement, changing the short tags
 		// to standard PHP echo statements.
 		
+		log_message('debug', "Loading $_ci_path");
+		
 		if ((bool) @ini_get('short_open_tag') === FALSE AND config_item('rewrite_short_tags') == TRUE)
 		{
 			echo eval('?>'.preg_replace("/;*\s*\?>/", "; ?>", str_replace('<?=', '<?php echo ', file_get_contents($_ci_path))));
@@ -332,7 +354,6 @@ class MY_Loader extends CI_Loader {
 			include($_ci_path); // include() vs include_once() allows for multiple views with the same name
 		}
 		
-		log_message('debug', 'File loaded: '.$_ci_path);
 		
 		// Return the file data if requested
 		if ($_ci_return === TRUE)
@@ -608,7 +629,8 @@ class MY_Loader extends CI_Loader {
 		
 		// active app auto-loader
 		if (WPCI::active_app_path() != APPPATH) {
-			@include_once(WPCI::active_app_path().'config/autoload'.EXT);
+			if (file_exists($autoload_path = WPCI::active_app_path().'/config/autoload'.EXT))
+				@include_once($autoload_path);
 			if (isset($autoload)) {
 				$this->_ci_autoload($autoload);
 				unset($autoload);

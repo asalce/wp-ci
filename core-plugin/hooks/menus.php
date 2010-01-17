@@ -20,6 +20,8 @@
 
 add_action('admin_menu', 'wpci_admin_menu');
 function wpci_admin_menu() {
+	WPCI::log('info', 'wpci_admin_menu()');
+	
 	// add menu item for WP-CI
 	add_options_page('WP-CI', 'WP-CI', 'administrator', 'wp-ci', array('WPCI', 'execute_admin_fx'));
 	
@@ -29,6 +31,8 @@ function wpci_admin_menu() {
 }
 
 function wpci_process_admin_annotations($app, $app_path) {
+	WPCI::log('info', 'wpci_process_admin_annotations()');
+	
 	$dir = opendir($app_path);
 	
 	while(($entry = readdir($dir)) !== false) {
@@ -57,6 +61,17 @@ function wpci_process_admin_annotations($app, $app_path) {
 						// submenus
 						if (isset($method['submenu'])) {
 							WPCI::add_submenu($app, "$app_path/$entry", $class, $method_name, $method);
+						}
+						else if (isset($method['item'])) {
+							$method['submenu'] = $method['item'];
+							WPCI::add_submenu($app, "$app_path/$entry", $class, $method_name, $method);
+						}
+						
+						// submenus on specific pages
+						foreach(array('posts', 'media', 'links', 'pages', 'comments', 'appearance', 'plugins', 'users', 'tools', 'settings') as $p) {
+							if (isset($method[$p.'_item'])) {
+								WPCI::add_submenu($app, "$app_path/$entry", $class, $method_name, $method, $p);
+							}
 						}
 						
 					}

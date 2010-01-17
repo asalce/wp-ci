@@ -1,0 +1,6 @@
+/* pretty-up the save button bar */
+p.submit {
+	border: 1px solid #aaa;
+	background-color: #efefef;
+	padding: 15px 15px;
+}

@@ -2,6 +2,17 @@
 
 class MY_Router extends CI_Router {
 
+	private $app;
+	
+	
+	function set_app($app) {
+		$this->app = $app;
+	}
+	
+	function fetch_app() {
+		return $this->app;
+	}
+
 	// --------------------------------------------------------------------
 	
 	function MY_Router() {
@@ -169,12 +180,12 @@ class MY_Router extends CI_Router {
 		}
 		
 		// Does the requested controller exist in the root folder?
-		if (file_exists(WPCI::active_app_path().'controllers/'.$segments[0].EXT)) {
+		if (file_exists(WPCI::active_app_path().'/controllers/'.$segments[0].EXT)) {
 			return $segments;
 		}
 
 		// Is the controller in a sub-folder?
-		if (is_dir(WPCI::active_app_path().'controllers/'.$segments[0]))
+		if (is_dir(WPCI::active_app_path().'/controllers/'.$segments[0]))
 		{		
 			// Set the directory and remove it from the segment array
 			$this->set_directory($segments[0]);
@@ -183,7 +194,7 @@ class MY_Router extends CI_Router {
 			if (count($segments) > 0)
 			{
 				// Does the requested controller exist in the sub-folder?
-				if ( ! file_exists(WPCI::active_app_path().'controllers/'.$this->fetch_directory().$segments[0].EXT))
+				if ( ! file_exists(WPCI::active_app_path().'/controllers/'.$this->fetch_directory().$segments[0].EXT))
 				{
 					wp_die("There are no controllers for <b>".$this->fetch_directory().$segments[0]."</b>.");
 				}
@@ -194,7 +205,7 @@ class MY_Router extends CI_Router {
 				$this->set_method('index');
 			
 				// Does the default controller exist in the sub-folder?
-				if ( ! file_exists(WPCI::active_app_path().'controllers/'.$this->fetch_directory().$this->default_controller.EXT))
+				if ( ! file_exists(WPCI::active_app_path().'/controllers/'.$this->fetch_directory().$this->default_controller.EXT))
 				{
 					$this->directory = '';
 					return array();

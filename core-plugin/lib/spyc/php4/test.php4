@@ -16,8 +16,6 @@
 # I dunno, 20 months?  Alright.  Go team.
 #
 
-error_reporting(E_ALL);
-
 include('spyc.php4');
 
 $yaml = Spyc::YAMLLoad('../spyc.yaml');

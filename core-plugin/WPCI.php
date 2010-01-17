@@ -28,9 +28,33 @@ class WPCI {
 	
 	static $admin_menus = array();
 	
-	private static $active_app;
+	static $active_app;
 	
 	private static $title;
+	
+	static function get_url($resource, $app = null) {
+		if (!$app)
+			$app = self::$active_app;
+		
+		if ($app)
+			return WP_PLUGIN_URL."/$app/application/".$resource;
+		else
+			return WP_PLUGIN_URL."/wp-ci/".$resource;
+	}
+	
+	static function url($resource, $app = null) {
+		echo self::get_url($resource, $app);
+	}
+	
+	static function log($level, $message = null) {
+		if (function_exists('log_message')) {
+			log_message($level, $message);
+		}
+		else if ( ( defined('WP_DEBUG_WPCI') && WP_DEBUG_WPCI == true ) 
+			 ||   ( defined('WP_DEBUG') && WP_DEBUG == true ) ) {
+			error_log("[WPCI] $message");
+		}
+	}
 	
 	static function title($title) {
 		self::$title = $title;
@@ -59,8 +83,11 @@ class WPCI {
 		$app_name = (is_array($spec) && count($spec) > 1 ? $spec[1] : $spec);
 
 		if (self::registered($app_name)) {
-			log_message('debug', "Pluggable application [$app_name] activated");
+			global $CFG;
 			self::$active_app = $app_name;
+			$CFG->load('config');
+
+			log_message('debug', "Pluggable application [$app_name] activated");
 		}
 	}
 	
@@ -92,7 +119,7 @@ class WPCI {
 	static function register_app($plugin_file) {
 		$app_name = substr(basename($plugin_file), 0, strrpos(basename($plugin_file), '.'));
 		log_message('debug', "Registering pluggable application: [$app_name]");
-		$app_path = realpath(dirname($plugin_file)).'/application/';
+		$app_path = realpath(dirname($plugin_file)).'/application';
 		if (file_exists($app_path) && is_dir($app_path)) {
 			self::$apps[$app_name] = $app_path;
 		}
@@ -109,7 +136,7 @@ class WPCI {
 	static function include_controller(&$RTR) {
 		$the_path = null;
 		
-		$this_path = self::active_app_path().'controllers/'.$RTR->fetch_directory().$RTR->fetch_class().EXT;
+		$this_path = self::active_app_path().'/controllers/'.$RTR->fetch_directory().$RTR->fetch_class().EXT;
 		if (file_exists($this_path)) {
 			require_once($this_path);
 			log_message('debug', "Loaded Controller $this_path");
@@ -117,7 +144,7 @@ class WPCI {
 		}
 		
 		if (!$the_path) {
-			$this_path = self::active_app_path().'controllers/'.$RTR->default_controller.EXT;
+			$this_path = self::active_app_path().'/controllers/'.$RTR->default_controller.EXT;
 			require_once($this_path);
 			log_message('debug', "Loaded Controller $this_path");
 			$the_path = $this_path;
@@ -156,13 +183,21 @@ class WPCI {
 		self::$admin_menus[$app][$class][$method_name] = $token;
 		self::$admin_menus[$token] = array('app' => $app, 'app_path' => $path, 'class' => $class, 'method_name' => $method_name);
 		
-		add_menu_page($args['page_title'], $args['page_title'], $args['capability'], $token, array('WPCI', 'execute_admin_fx'), '', $args['position']);
+		$icon_url = '';
+		if ($icon = isset($annotations['icon']) ? $annotations['icon'] : null) {
+			if (strncmp($icon, '/', 1) != 0 && strncmp($icon, 'http://', 7) != 0)
+				$icon_url = self::get_url($icon, $app); 
+			else
+				$icon_url = $icon;
+		}
+		
+		add_menu_page($args['page_title'], $args['page_title'], $args['capability'], $token, array('WPCI', 'execute_admin_fx'), $icon_url, $args['position']);
 		
 		if ($args['page_title'] != $args['menu_title'])
 			add_submenu_page($token, $args['page_title'], $args['menu_title'], $args['capability'], $token, array('WPCI', 'execute_admin_fx'));	
 	}
 	
-	static function add_submenu($app, $path, $class, $method_name, $annotations) {
+	static function add_submenu($app, $path, $class, $method_name, $annotations, $page = null) {
 		$args = wp_parse_args($annotations['submenu'], array(
 			'page_title' => 'My Menu Item',
 			'menu_title' => '',
