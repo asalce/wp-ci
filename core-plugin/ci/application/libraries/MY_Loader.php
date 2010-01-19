@@ -20,6 +20,21 @@
 
 class MY_Loader extends CI_Loader {
 	
+	function view($view, $vars = array(), $return = FALSE) {
+		// if $view is an array, bump all parameters up
+		if (is_array($view)) {
+			$return = (!is_array($vars));
+			$vars = $view;
+			
+			global $RTR;
+			return parent::view($RTR->fetch_method(), $vars, $return);
+		}
+		// otherwise, just a normal day in the neighborhood
+		else {
+			return parent::view($view, $vars, $return);
+		}
+	}
+	
 	/**
 	 * Model Loader
 	 *

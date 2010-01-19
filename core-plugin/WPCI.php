@@ -191,10 +191,14 @@ class WPCI {
 				$icon_url = $icon;
 		}
 		
-		add_menu_page($args['page_title'], $args['page_title'], $args['capability'], $token, array('WPCI', 'execute_admin_fx'), $icon_url, $args['position']);
+		$action_label = isset($_REQUEST['id']) ? 'Edit' : 'Add New';
+		$page_title = preg_replace('/%a/', $action_label, $args['page_title']);
+		$menu_title = preg_replace('/%a/', $action_label, $args['menu_title']);
 		
-		if ($args['page_title'] != $args['menu_title'])
-			add_submenu_page($token, $args['page_title'], $args['menu_title'], $args['capability'], $token, array('WPCI', 'execute_admin_fx'));	
+		add_menu_page($page_title, $page_title, $args['capability'], $token, array('WPCI', 'execute_admin_fx'), $icon_url, $args['position']);
+		
+		if ($page_title != $menu_title)
+			add_submenu_page($token, $page_title, $menu_title, $args['capability'], $token, array('WPCI', 'execute_admin_fx'));	
 	}
 	
 	static function add_submenu($app, $path, $class, $method_name, $annotations, $page = null) {
@@ -230,7 +234,11 @@ class WPCI {
 			else
 				$parent_token = self::$admin_menus[$app][$class][$args['parent']];
 		
-			add_submenu_page($parent_token, $args['page_title'], $args['menu_title'], $args['capability'], $token, array('WPCI', 'execute_admin_fx'));	
+			$action_label = isset($_REQUEST['id']) ? 'Edit' : 'Add New';
+			$page_title = preg_replace('/%a/', $action_label, $args['page_title']);
+			$menu_title = preg_replace('/%a/', $action_label, $args['menu_title']);
+			
+			add_submenu_page($parent_token, $page_title, $menu_title, $args['capability'], $token, array('WPCI', 'execute_admin_fx'));	
 		}
 	}
 	

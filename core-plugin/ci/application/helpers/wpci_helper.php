@@ -18,6 +18,11 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+
+function is_action($path) {
+	return false;
+}
+
 /**
  * Set the WordPress title to any value from anywhere in the stack.
  * @param title
@@ -27,7 +32,15 @@ function title($title) {
 	WPCI::title($title);
 }
 
-function get_admin_link($args = array()) {
+function get_add_or_edit($value) {
+	return ($value ? 'Edit' : 'Add New');
+}
+
+function add_or_edit($value) {
+	echo get_add_or_edit($value);
+}
+
+function get_admin_link($args = array(), $params = array()) {
 	global $RTR;
 	
 	if (!is_array($args)) {
@@ -48,7 +61,7 @@ function get_admin_link($args = array()) {
 		'controller' => $RTR->fetch_class(),
 		'action' => $RTR->fetch_method(),
 		'directory' => $RTR->fetch_directory(),
-		'params' => array()
+		'params' => $params
 	), $args);
 	
 	extract($args);
@@ -81,7 +94,7 @@ function get_admin_link($args = array()) {
 	return (count($query) ? $base."&".join('&', $query) : $base);		
 }
 
-function get_admin_page($args = array()) {
+function get_admin_page($args = array(), $params = array()) {
 	global $RTR;
 	
 	if (!is_array($args)) {
@@ -102,7 +115,7 @@ function get_admin_page($args = array()) {
 		'controller' => $RTR->fetch_class(),
 		'action' => $RTR->fetch_method(),
 		'directory' => $RTR->fetch_directory(),
-		'params' => array()
+		'params' => $params
 	), $args);
 	
 	extract($args);
@@ -120,18 +133,18 @@ function get_admin_page($args = array()) {
 	}
 }
 
-function admin_page($args = array()) {
-	echo get_admin_page($args);
+function admin_page($args = array(), $params = array()) {
+	echo get_admin_page($args, $params);
 }
 
-function admin_link($args = array()) {
-	echo get_admin_link($args);
+function admin_link($args = array(), $params = array()) {
+	echo get_admin_link($args, $params);
 }
 
-function admin_head($label, $icon = 'icon-options-general') {
+function admin_head($label, $icon = 'icon-options-general', $add_new_url = null, $add_new_label = 'Add New') {
 	?>
 		<div id="<?php echo $icon ?>" class="icon32"><br /></div>
-		<h2><?php echo $label ?></h2>
+		<h2><?php echo $label ?><?php if ($add_new_url) echo ' <a href="'.$add_new_url.'" class="add-new-h2 button">'.$add_new_label.'</a>' ?></h2>
 	<?php
 }
 

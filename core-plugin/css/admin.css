@@ -4,3 +4,62 @@ p.submit {
 	background-color: #efefef;
 	padding: 15px 15px;
 }
+
+.wrap h2 {
+	margin-bottom: 15px;
+}
+
+/* anchor buttons that supports an icon */
+a.icon-button {
+	float: left;
+}
+
+.ui-tabs table.form-table,
+.ui-tabs-panel,
+.ui-tabs table.form-table input,
+.ui-tabs table.form-table textarea {
+	font-family: "Lucida Grande",Verdana,Arial,"Bitstream Vera Sans",sans-serif;
+	font-size: 13px;	
+}
+
+table.widefat a.icon-button {
+	position: relative;
+	top: 5px;
+}
+
+table.widefat td.icon-button {
+	padding-bottom: 12px;
+}
+
+a.icon-button span {
+	display: block;
+	height: 16px;
+	background-repeat: no-repeat;
+	padding-left: 22px;
+}
+
+a.icon-edit span {
+	background-image: url('../img/edit.png');
+}
+
+a.icon-delete span {
+	background-image: url('../img/delete.png');
+}
+
+a.icon-media-browse span {
+	background-image: url('../img/media-browse.png');
+}
+
+a.no-label span {
+	text-indent: -9999px;
+	padding-left: 16px;
+}
+
+table.min-height td {
+	height: 35px;
+}
+
+.ui-tabs-nav li {
+	font-family: "Lucida Grande",Verdana,Arial,"Bitstream Vera Sans",sans-serif;
+	font-size: 13px;
+}
