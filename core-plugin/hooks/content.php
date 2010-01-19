@@ -120,12 +120,12 @@ function wpci_admin_init() {
 		
 		if ($class && $method) {
 		
+			// fake the router into thinking he did his job...
 			$RTR->set_app($app);
 			$RTR->set_class($class);
 			$RTR->set_method($method);
 			$RTR->set_directory($directory);
 			
-		
 			$BM->mark('loading_time_base_classes_end');
 		
 			if (!class_exists($class)) {
