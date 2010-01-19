@@ -50,8 +50,7 @@ class WPCI {
 		if (function_exists('log_message')) {
 			log_message($level, $message);
 		}
-		else if ( ( defined('WP_DEBUG_WPCI') && WP_DEBUG_WPCI == true ) 
-			 ||   ( defined('WP_DEBUG') && WP_DEBUG == true ) ) {
+		else if (defined('WP_DEBUG') && WP_DEBUG == true) {
 			error_log("[WPCI] $message");
 		}
 	}

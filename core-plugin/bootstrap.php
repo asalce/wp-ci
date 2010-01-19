@@ -30,13 +30,9 @@
 */
 	if (defined('WP_DEBUG') && WP_DEBUG == true) {
 		error_reporting(E_ALL);
-		ini_set('display_errors', true);
+		//ini_set('display_errors', true);
 	}
-	else {
-		error_reporting(E_ERROR);
-		ini_set('display_errors', false);
-	}
-
+	
 /*
 |---------------------------------------------------------------
 | SYSTEM FOLDER NAME

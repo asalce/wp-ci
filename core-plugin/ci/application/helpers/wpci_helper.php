@@ -154,11 +154,15 @@ function admin_head($label, $icon = 'icon-options-general', $add_new_url = null,
  * When action is null, the name of the current class is used.
  */
 function nonce($action = null) {
+	echo get_nonce($action);
+}
+
+function get_nonce($action = null) {
 	if ($action = null) {
 		global $RTR;
-		$RTR = $RTR->fetch_class();
+		$action = $RTR->fetch_class();
 	}
-	echo wp_create_nonce($action);
+	return wp_create_nonce($action);
 }
 
 /**
@@ -170,10 +174,12 @@ function nonce($action = null) {
 function verify_nonce($action = null, $param = 'nonce') {
 	if ($action = null) {
 		global $RTR;
-		$RTR = $RTR->fetch_class();
+		$action = $RTR->fetch_class();
 	}
 
 	if (!wp_verify_nonce($_REQUEST[$param], $action))
 		wp_die("Invalid nonce.");
+	else
+		return true;
 }
 
