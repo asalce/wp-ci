@@ -32,13 +32,12 @@ function wpci_generate_rewrite_rules($wp_rewrite) {
 	
 	$gateway = wpci_get_gateway();
 	$wp_rewrite->rules = array(
-		'^do/.*' => 'index.php?pagename='.$gateway->post_name
+		'^'.wpci_get_forward_gateway_slug().'/.*' => 'index.php?pagename='.$gateway->post_name
 	) + $wp_rewrite->rules;
 }
 
 add_filter('query_vars', 'wpci_rewrite_query_vars');
 function wpci_rewrite_query_vars($vars) {
 	WPCI::log('info', 'wpci_rewrite_query_vars()');
-	
 	return $vars;
 }

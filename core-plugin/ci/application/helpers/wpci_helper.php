@@ -20,36 +20,6 @@
 
 
 /**
- * Valid values for $path include
- *     {$class}
- *     {$class}/{$method}
- *     /${method}
- *	   array('controller' =>, 'action' =>)
- * @return TRUE if $path represents the current action.
- */ 
-function is_action($path) {
-	global $RTR;
-	
-	if (is_array($path)) {
-		if (isset($path['controller']) && $RTR->fetch_class() != $path['controller'])
-			return FALSE;
-		if (isset($path['action']) && $RTR->fetch_method() != $path['action'])
-			return FALSE;
-	}
-	
-	else {
-		$path = split('\/', $path);
-		if (isset($path[0]) && $path[0] && $RTR->fetch_class() != $path[0])
-			return FALSE;
-		if (isset($path[1]) && $path[1] && $RTR->fetch_method() != $path[1])
-			return FALSE;
-	}
-	
-	return TRUE;
-}
-
-
-/**
  * Set the WordPress title to any value from anywhere in the stack.
  * @param title
  * @see WPCI::title(String)

@@ -25,6 +25,12 @@ function wpci_get_gateway() {
 }
 endif;
 
+if (!function_exists('wpci_get_forward_gateway_slug')):
+function wpci_get_forward_gateway_slug() {
+	return get_option("wpci_forward_gateway_slug", "do");
+}
+endif;
+
 // create the WordPress page to represent our gateway
 if (!function_exists('wpci_create_gateway')):
 function wpci_create_gateway($slug) {

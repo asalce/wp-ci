@@ -31,6 +31,12 @@
 					<?php echo form_input(array('name' => 'encryption_key', 'value' => wpci_get_encryption_key(), 'class' => 'regular-text')) ?>
 				</td>
 			</tr>
+			<tr>
+				<th class="row">Gateway Slug</th>
+				<td>
+					<?php echo form_input(array('name' => 'wpci_forward_gateway_slug', 'value' => wpci_get_forward_gateway_slug(), 'class' => 'regular-text')) ?>
+				</td>
+			</tr>
 			
 		</table>
 		

@@ -168,7 +168,9 @@ class MY_Router extends CI_Router {
 	{
 		
 		// the first segment is our WordPress gateway, so we remove it
-		array_shift($segments);
+		$gateway = array_shift($segments);
+		if ($gateway != wpci_get_forward_gateway_slug())
+			return false;
 		
 		// the second segment might be an app spec
 		if ($segments[0] == WPCI::active_app()) 

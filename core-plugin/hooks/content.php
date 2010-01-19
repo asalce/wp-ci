@@ -19,12 +19,15 @@
  */
 
 add_filter('the_title', 'wpci_the_title', 10, 2);
-function wpci_the_title($title, $post_id = null) {
+function wpci_the_title($title, $post = null) {
 	WPCI::log('info', 'wpci_the_title()');
 	
 	$gateway = wpci_get_gateway();
 	// titles for CI are generated in CI views...
- 	return ($post_id == $gateway->ID) ? '' : $title;
+	if (is_object($post))
+ 		return ($post->ID == $gateway->ID) ? '' : $title;
+	else
+		return ($post == $gateway->ID) ? '' : $title;
 }
 
 add_filter('wp_title', 'wpci_wp_title', 10, 3);
@@ -177,7 +180,7 @@ function wpci_admin_init() {
 	}
 }
 
-// Process front-end requests
+// Process front-end requests - actually fired on both the front- and back-ends
 add_action('plugins_loaded', 'wpci_plugins_loaded');
 function wpci_plugins_loaded() {
 	WPCI::log('info', 'wpci_plugins_loaded()');
@@ -190,7 +193,7 @@ function wpci_plugins_loaded() {
 	if (is_admin()) {
 		return false;
 	}
-	
+
 	// set routing, triggering detection of active application (if any)
 	$RTR->_set_routing();
 	$RTR->set_app(WPCI::$active_app);
@@ -198,7 +201,7 @@ function wpci_plugins_loaded() {
 	// complete CI logging
 	log_message('debug', "Router Class Set");
 	
-	// if a class was detected, execute it
+	// if a class was identified, try to execute it
 	if ($RTR->fetch_class()) {
 		
 		WPCI::include_controller($RTR);

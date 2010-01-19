@@ -247,3 +247,45 @@ class WPCI {
 	}
 	
 }
+
+
+/**
+ * @return TRUE when the Gateway Page has been used to front this request,
+ * indicating that CodeIgniter should be used to process the request and
+ * generate content for its response.
+ */
+function is_codeigniter() {
+	$gateway = wpci_get_gateway();
+	$current_page = get_page(get_the_ID());
+	return $gateway->post_name == $current_page->post_name;
+}
+
+/**
+ * Valid values for $path include
+ *     {$class}
+ *     {$class}/{$method}
+ *     /${method}
+ *	   array('controller' =>, 'action' =>)
+ * @return TRUE if $path represents the current action.
+ */ 
+function is_action($path) {
+	global $RTR;
+	
+	if (is_array($path)) {
+		if (isset($path['controller']) && $RTR->fetch_class() != $path['controller'])
+			return FALSE;
+		if (isset($path['action']) && $RTR->fetch_method() != $path['action'])
+			return FALSE;
+	}
+	
+	else {
+		$path = split('\/', $path);
+		if (isset($path[0]) && $path[0] && $RTR->fetch_class() != $path[0])
+			return FALSE;
+		if (isset($path[1]) && $path[1] && $RTR->fetch_method() != $path[1])
+			return FALSE;
+	}
+	
+	return TRUE;
+}
+
