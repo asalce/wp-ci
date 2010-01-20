@@ -20,66 +20,56 @@
 
 add_action('admin_menu', 'wpci_admin_menu');
 function wpci_admin_menu() {
-	WPCI::log('info', 'wpci_admin_menu()');
+  WPCI::log('info', 'wpci_admin_menu()');
 	
-	// add menu item for WP-CI
-	add_options_page('WP-CI', 'WP-CI', 'administrator', 'wp-ci', array('WPCI', 'execute_admin_fx'));
+  // add menu item for WP-CI
+  add_options_page('WP-CI', 'WP-CI', 'administrator', 'wp-ci', array('WPCI', 'execute_admin_fx'));
 	
-	// add menus for all applications (via annotations)
-	foreach(WPCI::$apps as $app => $app_path)
-		wpci_process_admin_annotations($app, $app_path);
+  // add menus for all applications (via annotations)
+  // modified: ONLY SEARCH CONTROLLERS
+  foreach(WPCI::$apps as $app => $app_path)
+    wpci_process_admin_annotations($app, $app_path.'/controllers');
 }
 
 function wpci_process_admin_annotations($app, $app_path) {
-	WPCI::log('info', 'wpci_process_admin_annotations()');
+  WPCI::log('info', "wpci_process_admin_annotations({$app},{$app_path})");
 	
-	$dir = opendir($app_path);
-	
-	while(($entry = readdir($dir)) !== false) {
-		
-		if ($entry != '.' && $entry != '..') {
-			
-			if (is_dir("$app_path/$entry")) {
-				wpci_process_admin_annotations($app, "$app_path/$entry");
-			}
-			
-			else if (stripos($entry, '.php') == strlen($entry)-4) {
-				$class = split("\.", $entry);
-				$class = $class[0];
-				
-				Annotations::addClass($class, "$app_path/$entry");
-				
-				$ann = Annotations::get($class);
-				if (isset($ann['methods'])) {
-					foreach($ann['methods'] as $method_name => $method) {
-						
-						// administrative menus
-						if (isset($method['menu'])) {
-							WPCI::add_menu($app, "$app_path/$entry", $class, $method_name, $method);
-						}
-						
-						// submenus
-						if (isset($method['submenu'])) {
-							WPCI::add_submenu($app, "$app_path/$entry", $class, $method_name, $method);
-						}
-						else if (isset($method['item'])) {
-							$method['submenu'] = $method['item'];
-							WPCI::add_submenu($app, "$app_path/$entry", $class, $method_name, $method);
-						}
-						
-						// submenus on specific pages
-						foreach(array('posts', 'media', 'links', 'pages', 'comments', 'appearance', 'plugins', 'users', 'tools', 'settings') as $p) {
-							if (isset($method[$p.'_item'])) {
-								WPCI::add_submenu($app, "$app_path/$entry", $class, $method_name, $method, $p);
-							}
-						}
-						
-					}
-				}
-				
-			}
-		}
-	}
-	
-	closedir($dir);
+  // Not sure what the performance hit on Glob is.
+  // This should probably be cached based on file date modified.
+  $entries = glob("{$app_path}/*.php");
+  
+  foreach($entries as $entry) {
+    $class = explode(".php", basename($entry));
+    $class = $class[0];
+    
+    Annotations::addClass($class, $entry);
+    
+    $ann = Annotations::get($class);
+    if (isset($ann['methods'])) {
+      foreach($ann['methods'] as $method_name => $method) {
+        
+        // administrative menus
+        if (isset($method['menu'])) {
+          WPCI::add_menu($app, $entry, $class, $method_name, $method);
+        }
+        
+        // submenus
+        if (isset($method['submenu'])) {
+          WPCI::add_submenu($app, $entry, $class, $method_name, $method);
+        }
+        else if (isset($method['item'])) {
+          $method['submenu'] = $method['item'];
+          WPCI::add_submenu($app, $entry, $class, $method_name, $method);
+        }
+        
+        // submenus on specific pages
+        foreach(array('posts', 'media', 'links', 'pages', 'comments', 'appearance', 'plugins', 'users', 'tools', 'settings') as $p) {
+          if (isset($method[$p.'_item'])) {
+            WPCI::add_submenu($app, $entry, $class, $method_name, $method, $p);
+          }
+        }    
+      }
+    }
+  }
+  
 }
