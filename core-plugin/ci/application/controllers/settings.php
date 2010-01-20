@@ -15,9 +15,11 @@ class Settings extends Controller {
 			
 			update_option('wpci_encryption_key', strip_tags($this->input->post('encryption_key')));
 			
-			update_option('wpci_forward_gateway_slug', strip_tags($this->input->post('wpci_forward_gateway_slug')));
+			update_option('wpci_forward_gateway_slug', strip_tags($this->input->post('forward_gateway_slug')));
 			
-			$this->session->set_flashdata('success', 'Settings saved.');
+			update_option('wpci_database_debugging_enabled', strip_tags($this->input->post('database_debugging_enabled')));
+			
+			success('Settings <b>saved</b>.');
 			
 			wp_redirect("?page=wp-ci");
 		}

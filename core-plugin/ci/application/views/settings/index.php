@@ -4,11 +4,9 @@
 	<?php admin_head('WP-CI Settings'); ?>
 
 	<form method="post" action="<?php admin_link('saveSettings') ?>">
-		<?php if ($success = $CI->session->flashdata('success')): ?>
-			<div class="updated fade" id="message" style="background-color: rgb(255, 251, 204);"><p><?php echo $success ?></p></div>
-			<br />
-		<?php endif; ?>
-
+		
+		<?php success_and_failure(); ?>
+		
 		<?php echo form_hidden('nonce', get_nonce()) ?>
 		
 		<table class="form-table">
@@ -22,7 +20,7 @@
 						2 => 'Debug Messages',
 						3 => 'Informational Messages',
 						4 => 'All Messages'
-					), get_option('wpci_logging_threshold')) ?>
+					), wpci_get_logging_threshold()) ?>
 				</td>
 			</tr>
 			<tr>
@@ -34,7 +32,16 @@
 			<tr>
 				<th class="row">Gateway Slug</th>
 				<td>
-					<?php echo form_input(array('name' => 'wpci_forward_gateway_slug', 'value' => wpci_get_forward_gateway_slug(), 'class' => 'regular-text')) ?>
+					<?php echo form_input(array('name' => 'forward_gateway_slug', 'value' => wpci_get_forward_gateway_slug(), 'class' => 'regular-text')) ?>
+				</td>
+			</tr>
+			<tr>
+				<th class="row">Database Debugging</th>
+				<td>
+					<?php echo form_dropdown('database_debugging_enabled', array(
+						'' => 'Disabled&nbsp;&nbsp;',
+						1 => 'Enabled'
+					), wpci_get_database_debugging_enabled()) ?>
 				</td>
 			</tr>
 			

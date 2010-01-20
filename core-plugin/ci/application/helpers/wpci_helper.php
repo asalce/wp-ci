@@ -18,6 +18,64 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+/**
+ * Sets/gets a success message from the flashdata scope.
+ * @param $message When set, puts $message at 'success' in the flashdata scope; otherwise, attempts
+ * to return a message previously stored in the same location.
+ */
+function success($message = null) {
+	global $CI;
+	if (!$CI) {
+		wp_die('Can\'t use <code>success()</code> without an initialized CI request.');
+	}
+	
+	if ($message) {
+		$CI->session->set_flashdata('success', $message);
+		return FALSE;
+	}
+	else if ($message = $CI->session->flashdata('success')) {
+		return $message;
+	}
+}
+
+/**
+ * Sets/gets a failure message from the flashdata scope.
+ * @param $message When set, puts $message at 'failure' in the flashdata scope; otherwise, attempts
+ * to return a message previously stored in the same location.
+ */
+function failure($message = null) {
+	global $CI;
+	if (!$CI) {
+		wp_die('Can\'t use <code>failure()</code> without an initialized CI request.');
+	}
+	
+	if ($message) {
+		$CI->session->set_flashdata('failure', $message);
+		return FALSE;
+	}
+	else if ($message = $CI->session->flashdata('failure')) {
+		return $message;
+	}
+}
+
+/**
+ * Prints the WordPress-standard success and/or failure bar when a message is stored
+ * in either of success() or failure().
+ */
+function success_and_failure() {
+	if ($message = success()) {
+		?>
+			<div class="updated fade success" id="message" style="background-color: rgb(255, 251, 204);"><p><?php echo $message ?></p></div><br />
+		<?php
+	}
+	
+	if ($message = failure()) {
+		?>
+			<div class="updated fade failure" id="message" style="background-color: #AB6F74;"><p><?php echo $message ?></p></div><br />
+		<?php
+	}
+}
+
 
 /**
  * Set the WordPress title to any value from anywhere in the stack.

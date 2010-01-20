@@ -32,6 +32,21 @@ class WPCI {
 	
 	private static $title;
 	
+	private static $vars = array();
+	
+	static function set($name, $value = null) {
+		self::$vars[$name] = $value;
+		return $value;
+	}
+	
+	static function get($name, $default = null) {
+		return (isset(self::$vars[$name]) ? self::$vars[$name] : $default);
+	}
+	
+	static function safe($name, $default = null) {
+		return htmlentities(self::get($name, $default));
+	}
+	
 	static function get_url($resource, $app = null) {
 		if (!$app)
 			$app = self::$active_app;
