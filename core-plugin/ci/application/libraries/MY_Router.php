@@ -1,4 +1,22 @@
 <?php  if ( ! defined('BASEPATH')) exit('No direct script access allowed');
+/**
+ * WP-CI The CodeIgniter plugin for WordPress.
+ * Copyright (C)2009-2010 Aaron Collegeman.
+ * 
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ */
 
 class MY_Router extends CI_Router {
 
@@ -130,7 +148,7 @@ class MY_Router extends CI_Router {
 		if (isset($segments[1]))
 		{
 			// A scaffolding request. No funny business with the URL
-			if ($this->routes['scaffolding_trigger'] == $segments[1] AND $segments[1] != '_ci_scaffolding')
+			if (isset($this->routes['scaffolding_trigger']) AND $this->routes['scaffolding_trigger'] == $segments[1] AND $segments[1] != '_ci_scaffolding')
 			{
 				$this->scaffolding_request = TRUE;
 				unset($this->routes['scaffolding_trigger']);
@@ -173,8 +191,9 @@ class MY_Router extends CI_Router {
 			return false;
 		
 		// the second segment might be an app spec
-		if ($segments[0] == WPCI::active_app()) 
-			array_shift($segments);
+		if ($segments[0] == WPCI::active_app()) {
+			$this->set_app(array_shift($segments));
+		}
 		
 		// and if there's nothing else, stop validating...
 		if (!count($segments)) {

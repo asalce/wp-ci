@@ -18,30 +18,21 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+// the_title filter is executed for the_title() function, typically
+// used by WordPress templates to print the page title into the source
 add_filter('the_title', 'wpci_the_title', 10, 2);
 function wpci_the_title($title, $post = null) {
 	WPCI::log('info', 'wpci_the_title()');
-	
-	$gateway = wpci_get_gateway();
-	// titles for CI are generated in CI views...
-	if (is_object($post))
- 		return ($post->ID == $gateway->ID) ? '' : $title;
-	else
-		return ($post == $gateway->ID) ? '' : $title;
+	return (is_codeigniter()) ? WPCI::get_title() : $title;
 }
 
+// wp_title filter is executed to retrieve the page/post title as it
+// is printed for the <title></title> tag, as well as by the Widgets
+// that print lists of pages or posts
 add_filter('wp_title', 'wpci_wp_title', 10, 3);
 function wpci_wp_title($title, $sep, $seplocation) {
 	WPCI::log('info', 'wpci_wp_title()');
-	
-	global $post;
-	$gateway = wpci_get_gateway();
-	if ($gateway && $post && $gateway->ID == $post->ID) {
-		return WPCI::get_title($sep, $seplocation);
-	}
-	else {
-		return $title;
-	}
+	return (is_codeigniter()) ? WPCI::get_title($sep, $seplocation) : $title;
 }
 
 add_filter('the_content', 'wpci_the_content');
@@ -73,6 +64,7 @@ function wpci_admin_init() {
 		$method = null;
 		$app = null;
 		$directory = null;
+		$app_path = null;
 
 		// exact match for token?
 		if (isset(WPCI::$admin_menus[$token])) {
@@ -114,9 +106,6 @@ function wpci_admin_init() {
 				wp_die("I don't know how to do <b>{$class}/{$method}</b>.");
 			}	
 			
-			// make sure the annotations are loaded
-			Annotations::addClass($class, $app_path);
-			
 			// load the contorller
 			require_once($app_path);
 		}
@@ -151,6 +140,9 @@ function wpci_admin_init() {
 		
 			$EXT->_call_hook('post_controller_constructor');
 
+			// make sure app class is at the top of the annotations stack
+			Annotations::addClass($class, $app_path);
+			
 			// Is there a "remap" function?
 			if (method_exists($CI, '_remap')) {
 				$CI->_remap($method);
@@ -161,7 +153,7 @@ function wpci_admin_init() {
 				if ( ! in_array(strtolower($method), array_map('strtolower', get_class_methods($CI)))) {
 					wp_die("I'm not allowed to do <b>{$class}/{$method}</b>.");
 				}
-
+				
 				// Call the requested method.
 				// Any URI segments present (besides the class/function) will be passed to the method for convenience
 				call_user_func_array(array(&$CI, $method), array());
@@ -204,7 +196,7 @@ function wpci_plugins_loaded() {
 	// if a class was identified, try to execute it
 	if ($RTR->fetch_class()) {
 		
-		WPCI::include_controller($RTR);
+		$app_path = WPCI::include_controller($RTR);
 		
 		$BM->mark('loading_time_base_classes_end');
 
@@ -266,6 +258,13 @@ function wpci_plugins_loaded() {
 			 * ------------------------------------------------------
 			 */
 			$EXT->_call_hook('post_controller_constructor');
+			
+			// make sure app class is at the top of the annotations stack
+			Annotations::addClass($RTR->fetch_class(), $app_path);
+
+			// grab the title annotation, if defined
+			if ($title = Annotations::get($RTR->fetch_class(), $RTR->fetch_method(), 'title'))
+				WPCI::set_title($title);
 
 			// Is there a "remap" function?
 			if (method_exists($CI, '_remap'))
@@ -280,6 +279,14 @@ function wpci_plugins_loaded() {
 				{
 					wp_die("I'm not allowed to do {$class}/{$method}.");
 				}
+				
+				$param_list = substr(
+					preg_replace('/\t/',  '', 
+						preg_replace('/[\n\r]/', '', 
+							print_r(array_slice($URI->rsegments, 2), true)
+				)), 8);
+				
+				log_message('debug', "Executing {$class}/{$method}($param_list");
 
 				// Call the requested method.
 				// Any URI segments present (besides the class/function) will be passed to the method for convenience
@@ -321,7 +328,7 @@ add_action('in_admin_footer', 'wpci_in_admin_footer');
 function wpci_in_admin_footer() {
 	?> 
 		<span style="float: right; margin-left: 20px;">
-			You are running <a href="http://codeigniter.com" target="_blank">CodeIgniter <?php echo CI_VERSION ?></a>
+			You are running <a href="http://codeigniter.com" target="_blank">CodeIgniter&reg; <?php echo CI_VERSION ?></a>
 			| <a href="<?php echo WP_PLUGIN_URL ?>/wp-ci/ci/user_guide" target="_blank">User Manual</a>
 			| <a href="<?php echo WP_PLUGIN_URL ?>/wp-ci/ci/wpci_user_guide" target="_blank">Developing with WP-CI</a>
 		</span> 

@@ -1,10 +1,39 @@
 <?php
+/**
+ * WP-CI The CodeIgniter plugin for WordPress.
+ * Copyright (C)2009-2010 Collegeman.net, LLC.
+ * 
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ */
 
-$form2mail_secret = "Jackson Clinics are the best clinics!";
+// requires localization helper
+// POOR, poor form...
+$CI = &get_instance();
+$CI->load->helper('localization');
 
 $form2mail_fields = array();
 
-function setformfield($label, $name, $options = array()) {
+/**
+ * Records a new form field - could be a text input or a select input -for this form2mail session. 
+ * @param String The field label, to be displayed in the e-mail
+ * @param String The field name, to store the field value
+ * @param Array Options for field creation, including
+ *		display_when = '<field_name>'
+ *			Only include this field in the resulting e-mail when <field_name> is present and defined
+ */
+function set_formfield($label, $name, $options = array()) {
 	global $form2mail_fields;
 	
 	$options = array_merge(array(
@@ -19,40 +48,86 @@ function setformfield($label, $name, $options = array()) {
 	
 }
 
+/**
+ * Records a new form field and then prints a localized version of $label.  
+ * For parameter types and descriptions, see set_formfield($label, $name, $options);
+ */
 function formfield($label, $name, $options = array()) {
-	setformfield($label, $name, $options);
-	echo _loc($label);
+	set_formfield($label, $name, $options);
+	_L($label);
 }
 
-function setcheckboxfield($label, $name) {
+
+/**
+ * Records a new checkbox field - a checkbox input or a radio input -for this form2mail session. 
+ * @param String The field label, to be displayed in the e-mail
+ * @param String The field name, to store the field value
+ * @param Array Options for field creation, including
+ *		display_when = '<field_name>,<field_name2>,...'
+ *			Only include this field in the resulting e-mail when one of <field_name>,<field_name2>,... are present and defined
+ */
+function set_checkboxfield($label, $name, $options = array()) {
 	global $form2mail_fields;
+	
+	$options = array_merge(array(
+		"display_when" => ''
+	), $options);
+	
 	$form2mail_fields[] = array(
 		'name' => $name,
 		'label' => $label,
-		'checkbox' => true
+		'checkbox' => true,
+		'options' => $options
 	);
 }
 
-function checkboxfield($label, $name) {
-	setcheckboxfield($label, $name);
-	echo _loc($label);
+/**
+ * Records a new form field and then prints a localized version of $label.  
+ * For parameter types and descriptions, see set_checkboxfield($label, $name, $options);
+ */
+function checkboxfield($label, $name, $options = array()) {
+	set_checkboxfield($label, $name, $options);
+	_L($label);
 }
 
-function setprivatefield($label, $name) {
+/**
+ * Records a private field - a field whose text value is stored in the local database instead of being e-mailed.
+ * @param String The field label, to be displayed in the e-mail
+ * @param String The field name, to store the field value
+ * @param Array Options for field creation, including
+ *		display_when = '<field_name>,<field_name2>,...'
+ *			Only include this field in the resulting e-mail when one of <field_name>,<field_name2>,... are present and defined
+ */
+function set_privatefield($label, $name, $options = array()) {
 	global $form2mail_fields;
+	
+	$options = array_merge(array(
+		"display_when" => ''
+	), $options);
+	
 	$form2mail_fields[] = array(
 		'name' => $name,
 		'label' => $label,
-		'private' => true
+		'private' => true,
+		'options' => $options
 	);
 }
 
-function privatefield($label, $name) {
-	setprivatefield($label, $name);
-	echo _loc($label);
+/**
+ * Records a new private field and then prints a localized version of $label.  
+ * For parameter types and descriptions, see set_privatefield($label, $name, $options);
+ */
+function privatefield($label, $name, $options = array()) {
+	setprivatefield($label, $name, $options);
+	_L($label);
 }
 
-function setformsection($label, $level = 1) {
+/**
+ * Introduces a section break into the form fields.
+ * @param String The label to use to identify the section. 
+ * @param Numeric The level at which this section occurs in the hierarchy.
+ */
+function set_formsection($label, $level = 1) {
 	global $form2mail_fields;
 	$form2mail_fields[] = array(
 		'header' => $label,
@@ -60,21 +135,41 @@ function setformsection($label, $level = 1) {
 	);
 }
 
+/**
+ * Records a new field section, and then prints the localized version of $label into the form.
+ * For parameter types and descriptions, see set_formsection($label, $name);
+ */
 function formsection($label, $level = 1) {
-	setformsection($label);
-	echo _loc($label);
+	set_formsection($label, $level);
+	echo '<span class="sectionbreak">'.__L($label).'</span>';
 }
 
-function fieldlist() {
-	global $form2mail_fields, $form2mail_secret;
+/**
+ * Records a new field section, and then prints the localized version of $label into the form as
+ * <hX class="sectionbreak"><span>$label</span></hX>
+ * where X is = $level
+ */
+function formheading($label, $level = 1) {
+	set_formsection($label, $level);
+	echo '<div class="sectionbreak"><p>'.__L($label).'</p></div>';
+}
+
+/**
+ * Generates the JSON-encoded list of form fields to be captured and e-mailed,
+ * and prints that list as well as an encoded NONCE to protect the list from
+ * tampering as hidden input fields followed by </form>.
+ */
+function form2mail_close() {
+	global $form2mail_fields;
 	$json = htmlentities(json_encode($form2mail_fields));
 	?>
-		<input type="hidden" name="__fields" value="<?php echo $json ?>" />
-		<input type="hidden" name="__nonce" value="<?php echo md5($form2mail_secret.$json) ?>" />
+			<input type="hidden" name="__fields" value="<?php echo $json ?>" />
+			<input type="hidden" name="__nonce" value="<?php echo md5(wpci_get_encryption_key().$json) ?>" />
+		</form>
 	<?php
 }
 
-function form_nonce_is_valid() {
-	global $IN, $form2mail_secret;
-	return $IN->post('__nonce') == md5($form2mail_secret.htmlentities($IN->post('__fields')));
+function verify_form2mail_nonce() {
+	global $IN;
+	return $IN->post('__nonce') == md5(wpci_get_encryption_key().htmlentities($IN->post('__fields')));
 }

@@ -30,10 +30,12 @@ function success($message = null) {
 	}
 	
 	if ($message) {
+		log_message('debug', "Storing success message: $message");
 		$CI->session->set_flashdata('success', $message);
 		return FALSE;
 	}
 	else if ($message = $CI->session->flashdata('success')) {
+		log_message('debug', "Retrieving success message: $message");
 		return $message;
 	}
 }
@@ -50,10 +52,12 @@ function failure($message = null) {
 	}
 	
 	if ($message) {
+		log_message('debug', "Storing failure message: $message");
 		$CI->session->set_flashdata('failure', $message);
 		return FALSE;
 	}
 	else if ($message = $CI->session->flashdata('failure')) {
+		log_message('debug', "Retrieving failure message: $message");
 		return $message;
 	}
 }
@@ -63,71 +67,21 @@ function failure($message = null) {
  * in either of success() or failure().
  */
 function success_and_failure() {
-	if ($message = success()) {
-		?>
-			<div class="updated fade success" id="message" style="background-color: rgb(255, 251, 204);"><p><?php echo $message ?></p></div><br />
-		<?php
-	}
-	
-	if ($message = failure()) {
-		?>
-			<div class="updated fade failure" id="message" style="background-color: #AB6F74;"><p><?php echo $message ?></p></div><br />
-		<?php
-	}
-}
-
-
-/**
- * Set the WordPress title to any value from anywhere in the stack.
- * @param title
- * @see WPCI::title(String)
- */
-function title($title) {
-	WPCI::title($title);
-}
-
-function link_to($args = array(), $params = array(), $as_request_param = 'page') {
-	echo get_link_to($args, $params, $as_request_param);
-}
-
-function get_link_to($args = array(), $params = array(), $as_request_param = 'page') {
-	if (is_admin()) {
-		return get_admin_link($args, $params, $as_request_param);
-	}
-}
-
-function form_open($action = '', $attributes = '', $hidden = array()) {
-	
-	// default form method is post
-	if ($attributes == '') {
-		$attributes = array('method' => 'post');
-	}
-
-	if (strpos($action, '://') === FALSE) {
-		if (strtolower($attributes['method']) == 'post' || !is_admin()) {
-			$action = get_link_to(array('action' => $action), array(), 'page');
+	foreach(array('success' => success(), 'failure' => failure()) as $class => $message) {
+		if (is_admin() && $message) {
+			?>
+				<div class="updated fade <?php echo $class ?>" id="message" style="background-color: <?php ($class == 'success' ? 'rgb(255, 251, 204)' : '#AB6F74') ?>;">
+					<p><?php echo $message ?></p></div><br />
+			<?php
 		}
-		else {
-			$hidden['page'] = get_link_to(array('action' => $action), array(), FALSE);
-			$action = '';
+		else if ($message) {
+			?>
+				<div class="<?php echo $class ?>">
+					<p><?php echo $message ?></p>
+				</div>
+			<?php
 		}
 	}
-	
-	if ($action)
-		$form = '<form action="'.$action.'"';
-	else
-		$form = '<form';
-
-	$form .= _attributes_to_string($attributes, TRUE);
-
-	$form .= '>';
-
-	if (is_array($hidden) AND count($hidden) > 0)
-	{
-		$form .= form_hidden($hidden);
-	}
-
-	return $form;
 }
 
 
@@ -142,81 +96,7 @@ function add_or_edit($value) {
 	echo get_add_or_edit($value);
 }
 
-function get_admin_link($args = array(), $params = array(), $as_request_param = 'page') {
-	global $RTR;
-	
-	if (!is_array($args)) {
-		$args = array('action' => $args);
-	}
-	
-	// admin links look like this: admin.php?page=wp-ci/<application>/<controller>/<directory>/<action>
-	// they also look like: admin.php?page=wp-ci&a=<application>&c=<controller>&d=<directory>&m=<action>
-	
-	// the first is only recognized when a menu or submenu has been defined through annotations
-	// the second is used when a token does not exist...
-	
-	// and the reason for this?
-	// without a defined $_REQUEST['page'], WordPress won't serve a custom admin page... :-P
-	
-	$args = array_merge(array(
-		'application' => $RTR->fetch_app(),
-		'controller' => $RTR->fetch_class(),
-		'action' => $RTR->fetch_method(),
-		'directory' => $RTR->fetch_directory(),
-		'params' => $params
-	), $args);
-	
-	extract($args);
-	
-	// sometimes $directory gets fucked up...
-	$directory = preg_replace("#\/\/#", "/", $directory);
-	
-	if (!is_array($params))
-		$params = array($params);
-	
-	$token = "wp-ci/$application".$directory."$controller/$action";
-	
-	if ($as_request_param) {
-		if (isset(WPCI::$admin_menus[$token])) {
-			$menu = WPCI::$admin_menus[$token];
-			
-			// FIXME: not necessarily "admin.php"...
-			$base = "admin.php?$as_request_param=$token";
-		}
-		else {
-			$base = "admin.php?$as_request_param=wp-ci&a=$application&c=$controller&m=$action&d=$directory";
-		}
-	}
-	else {
-		if (!is_array($params))
-			$params = array($params);
 
-		if (isset(WPCI::$admin_menus[$token])) {
-			return $token;
-		}
-		else {
-			return "wp-ci&a=$application&c=$controller&m=$action&d=$directory";
-		}
-	}
-	
-	$query = array();
-	foreach($params as $k => $p) {
-		if (is_array($p)) {
-			foreach($p as $i => $v) {
-				$query[] = urlencode($k).'['.urlencode($i).']='.urlencode($v);
-			}
-		}
-		else {
-			$query[] = urlencode($k).'='.urlencode($p);
-		}
-	}	
-	
-	return (count($query) ? $base."&".join('&', $query) : $base);		
-}
-
-function admin_link($args = array(), $params = array(), $as_request_parameter = FALSE) {
-	echo get_admin_link($args, $params);
-}
 
 /**
  * Generates a standard WordPress options page header, with optional
@@ -264,4 +144,5 @@ function verify_nonce($action = null, $param = 'nonce') {
 	else
 		return true;
 }
+
 
