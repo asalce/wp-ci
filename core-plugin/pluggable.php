@@ -25,12 +25,6 @@ function wpci_get_gateway() {
 }
 endif;
 
-if (!function_exists('wpci_get_forward_gateway_slug')):
-function wpci_get_forward_gateway_slug() {
-	return get_option("wpci_forward_gateway_slug", "do");
-}
-endif;
-
 // create the WordPress page to represent our gateway
 if (!function_exists('wpci_create_gateway')):
 function wpci_create_gateway($slug) {
@@ -105,9 +99,21 @@ function wpci_get_encryption_key() {
 }
 endif;
 
-// get the database debugging setting
+// get the db enabled
 if (!function_exists('wpci_get_database_debugging_enabled')):
 function wpci_get_database_debugging_enabled() {
-	return get_option('wpci_database_debugging_enabled', FALSE);
+	if ($threshold = get_option('wpci_database_debugging_enabled'))
+		return (int) $threshold;
+	else if (defined('WP_DEBUG') && WP_DEBUG)
+		return 1; // debugging level
+	else
+		return 0;
+}
+endif;
+
+// get the db enabled
+if (!function_exists('wpci_get_forward_gateway_slug')):
+function wpci_get_forward_gateway_slug() {
+	return get_option('wpci_get_forward_gateway_slug');
 }
 endif;
