@@ -161,7 +161,7 @@ class Annotations {
         $function = $annotations['function'];
         
         // store our annotations into the proper array
-        if ($function == '__constructor') {
+        if ($function == '__construct') {
           $class_notations['__class__'] = $annotations;
         } else if($function){
           $class_notations['methods'][ $function ]  = $annotations;
