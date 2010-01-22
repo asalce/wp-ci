@@ -25,14 +25,13 @@ function wpci_admin_menu() {
   // add menu item for WP-CI
   add_options_page('WP-CI', 'WP-CI', 'administrator', 'wp-ci', array('WPCI', 'execute_admin_fx'));
 	
-  // add menus for all applications (via annotations)
-  // modified: ONLY SEARCH CONTROLLERS
-  foreach(WPCI::$apps as $app => $app_path)
-    wpci_process_admin_annotations($app, $app_path.'/controllers');
+	// add menus for all applications (via annotations)
+	foreach(WPCI::$apps as $app => $app_path)
+		wpci_process_admin_annotations($app, "$app_path/controllers");
 }
 
 function wpci_process_admin_annotations($app, $app_path) {
-  WPCI::log('info', "wpci_process_admin_annotations({$app},{$app_path})");
+	WPCI::log('info', 'wpci_process_admin_annotations()');
 	
   // Not sure what the performance hit on Glob is.
   // This should probably be cached based on file date modified.

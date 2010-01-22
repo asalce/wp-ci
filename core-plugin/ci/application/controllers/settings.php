@@ -1,7 +1,6 @@
 <?php
 /**
  * @user_can(manage_options)
- * @function(__construct)
  */
 class Settings extends Controller {
 	

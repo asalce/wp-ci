@@ -21,7 +21,7 @@
 /*
 Plugin Name: WP-CI
 Plugin URI: http://aaroncollegeman.com/projects/wp-ci
-Description: Allows you to develop CodeIgniter applications within WordPress.
+Description: Allows you to develop CodeIgniter(R) applications within WordPress.
 Author: Aaron Collegeman
 Version: 1.0.0
 Author URI: http://aaroncollegeman.com
@@ -55,6 +55,7 @@ require_once(WPCI_ROOT.'/pluggable.php');
 require_once(WPCI_ROOT.'/hooks/activation.php');
 require_once(WPCI_ROOT.'/hooks/rewrite.php');
 require_once(WPCI_ROOT.'/hooks/content.php');
+require_once(WPCI_ROOT.'/hooks/templates.php');
 require_once(WPCI_ROOT.'/hooks/menus.php');
 
 // bootstrap CodeIgniter
