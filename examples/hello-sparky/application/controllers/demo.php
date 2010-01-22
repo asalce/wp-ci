@@ -1,7 +1,7 @@
 <?php
 /** 
 * @user_can(manage_options) 
-* @function(__constructor)
+* @function(__construct)
 */
 class Demo extends Controller {
 
