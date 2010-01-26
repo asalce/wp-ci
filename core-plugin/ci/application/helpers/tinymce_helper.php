@@ -26,7 +26,7 @@ function tinymce_simple($css_selector = 'textarea.tinymce') {
 			;(function($) { $(function() { setTimeout(function() {
 				$.each($('<?php echo $css_selector ?>'), function(i, editor) {
 					$(editor).tinymce({
-						script_url: '<?php echo WP_PLUGIN_URL ?>/wp-ci/ci/system/helpers/tiny_mce/tiny_mce.js',
+						script_url: '<?php echo WP_PLUGIN_URL ?>/wp-ci/ci/application/helpers/tiny_mce/tiny_mce.js',
 						mode: 'specific_textareas',
 						editor_selector: 'tinymce',
 						theme: 'simple'

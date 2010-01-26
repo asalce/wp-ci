@@ -161,15 +161,15 @@ function formheading($label, $level = 1) {
  */
 function form2mail_close() {
 	global $form2mail_fields;
-	$json = htmlentities(json_encode($form2mail_fields));
+	$field_data = json_encode($form2mail_fields);
 	?>
-			<input type="hidden" name="__fields" value="<?php echo $json ?>" />
-			<input type="hidden" name="__nonce" value="<?php echo md5(wpci_get_encryption_key().$json) ?>" />
+			<input type="hidden" name="__fields" value="<?php echo htmlspecialchars($field_data) ?>" />
+			<input type="hidden" name="__nonce" value="<?php echo md5(wpci_get_encryption_key().$field_data) ?>" />
 		</form>
 	<?php
 }
 
 function verify_form2mail_nonce() {
 	global $IN;
-	return $IN->post('__nonce') == md5(wpci_get_encryption_key().htmlentities($IN->post('__fields')));
+	return $IN->post('__nonce') == md5(wpci_get_encryption_key().$IN->post('__fields'));
 }

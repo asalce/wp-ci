@@ -36,7 +36,7 @@ class MY_Router extends CI_Router {
 	function MY_Router() {
 		$this->config =& load_class('Config');
 		$this->uri =& load_class('URI');
-		log_message('debug', "Router Class Initialized But Not Yet Set");
+		log_message('debug', "Router Class Initialized");
 	}
 	
 	/**
@@ -187,7 +187,7 @@ class MY_Router extends CI_Router {
 		
 		// the first segment is our WordPress gateway, so we remove it
 		$gateway = array_shift($segments);
-		if ($gateway != wpci_get_forward_gateway_slug())
+		if ($gateway != wpci_get_slug())
 			return false;
 		
 		// the second segment might be an app spec
