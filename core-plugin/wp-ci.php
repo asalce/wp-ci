@@ -21,7 +21,7 @@
 /*
 Plugin Name: WP-CI
 Plugin URI: http://aaroncollegeman.com/projects/wp-ci
-Description: Allows you to develop CodeIgniter(R) applications within WordPress.
+Description: Supports the development of WordPress plugins using the CodeIgniter(R) applications framework.
 Author: Aaron Collegeman
 Version: 1.0.0
 Author URI: http://aaroncollegeman.com
@@ -37,29 +37,29 @@ if (!defined('WPCI_ROOT'))
 
 // WP-CI plugin
 require_once(WPCI_ROOT.'/WPCI.php');
+WPCI::add_actions();
 
 // load dependencies and support libraries
-if (!class_exists('clAPI')) require_once(WPCI_ROOT.'/lib/coreylib/coreylib.php');
+if (!class_exists('clAPI')) 
+	require_once(WPCI_ROOT.'/lib/coreylib/coreylib.php');
 
-if (!class_exists('Spyc')) require_once(WPCI_ROOT.'/lib/spyc/spyc.php');
+if (!class_exists('Spyc')) 
+	require_once(WPCI_ROOT.'/lib/spyc/spyc.php');
 
-if (!class_exists('Annotations')) require_once(WPCI_ROOT.'/lib/annotations.php');
+if (!class_exists('Annotations')) 
+	require_once(WPCI_ROOT.'/lib/annotations.php');
 
 // load the hacks file, if it exists, allowing for pluggable overrides.
-if (file_exists(WPCI_ROOT.'/hacks.php')) require_once(WPCI_ROOT.'/hacks.php');
+if (file_exists(WPCI_ROOT.'/hacks.php')) 
+	require_once(WPCI_ROOT.'/hacks.php');
 
 // pluggable (i.e., hackable from hacks.php) functions
 require_once(WPCI_ROOT.'/pluggable.php');
 
-// hook CodeIgniter into WordPress
-require_once(WPCI_ROOT.'/hooks/activation.php');
-require_once(WPCI_ROOT.'/hooks/rewrite.php');
-require_once(WPCI_ROOT.'/hooks/content.php');
-require_once(WPCI_ROOT.'/hooks/templates.php');
-require_once(WPCI_ROOT.'/hooks/menus.php');
-
 // bootstrap CodeIgniter
 require_once(WPCI_ROOT.'/bootstrap.php');
 
-WPCI::log('debug', '***** WP-CI Loaded. Yippie! *********************');
+// call upon pluggable applications to register themselves
+// do_action('wpci_register_apps');
 
+log_message('debug', '+++| CodeIgniter is bootstrapped. Burn baby, burn. |+++');

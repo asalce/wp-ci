@@ -105,14 +105,14 @@ class MY_Router extends CI_Router {
 			$x = explode('/', $this->default_controller);
 			$this->set_class(end($x));
 			$this->set_method('index');
-			$this->_set_request(array_merge(array_filter(array('do', WPCI::active_app())), $x));
+			$this->_set_request(array_merge(array_filter(array('do', WPCI::get_active_app())), $x));
 		}
 		else
 		{
 			$this->set_class($this->default_controller);
 			$this->set_method('index');
 			// this is a little hairy!
-			$this->_set_request(array_merge(array_filter(array('do', WPCI::active_app())), array($this->default_controller, 'index')));
+			$this->_set_request(array_merge(array_filter(array('do', WPCI::get_active_app())), array($this->default_controller, 'index')));
 		}
 
 		// re-index the routed segments array so it starts with 1 rather than 0
@@ -191,7 +191,7 @@ class MY_Router extends CI_Router {
 			return false;
 		
 		// the second segment might be an app spec
-		if ($segments[0] == WPCI::active_app()) {
+		if ($segments[0] == WPCI::get_active_app()) {
 			$this->set_app(array_shift($segments));
 		}
 		

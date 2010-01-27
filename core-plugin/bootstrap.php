@@ -223,6 +223,9 @@ $EXT->_call_hook('pre_system');
  */
 
 $CFG =& load_class('Config');
+
+log_message('debug', '+++| Bootstrapping CodeIgniter.                   |+++');
+
 $URI =& load_class('URI');
 $RTR =& load_class('Router');
 $OUT =& load_class('Output');
