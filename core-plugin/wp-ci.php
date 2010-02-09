@@ -21,7 +21,7 @@
 /*
 Plugin Name: WP-CI
 Plugin URI: http://aaroncollegeman.com/projects/wp-ci
-Description: Supports the development of WordPress plugins using the CodeIgniter(R) applications framework.
+Description: Embed CodeIgniter(R) in WordPress, build plugins using MVC.
 Author: Aaron Collegeman
 Version: 1.0.0
 Author URI: http://aaroncollegeman.com
@@ -34,6 +34,12 @@ if (!defined('WPCI_FILE'))
 	
 if (!defined('WPCI_ROOT'))
 	define('WPCI_ROOT', dirname(__FILE__));
+	
+// request methods
+define('GET', "GET");
+define('POST', "POST");
+define('PUT', "PUT");
+define('DELETE', "DELETE");
 
 // WP-CI plugin
 require_once(WPCI_ROOT.'/WPCI.php');

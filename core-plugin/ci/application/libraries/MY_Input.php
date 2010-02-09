@@ -26,25 +26,4 @@ class MY_Input extends CI_Input {
 	
 	function _sanitize_globals() {}
 	
-	/*
-	function get($index = '', $xss_clean = FALSE) {
-		return stripslashes_deep(parent::get($index, $xss_clean));
-	}
-	
-	function post($index = '', $xss_clean = FALSE) {
-		return stripslashes_deep(parent::post($index, $xss_clean));
-	}
-	
-	function get_post($index = '', $xss_clean = FALSE) {
-		return stripslashes_deep(parent::get_post($index, $xss_clean));
-	}
-	
-	function cookie($index = '', $xss_clean = FALSE) {
-		return stripslashes_deep(parent::cookie($index, $xss_clean));
-	}
-	
-	function server($index = '', $xss_clean = FALSE) {
-		return stripslashes_deep(parent::server($index, $xss_clean));
-	}
-	*/
 }

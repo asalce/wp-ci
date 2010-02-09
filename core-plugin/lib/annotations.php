@@ -24,160 +24,148 @@
  * for annotations support in PHP4, and allows for annotations support without 
  * actually loading PHP classes into memory.
  *
- * @author Alberto Salce alberto.salce@gmail.com
  * @author Aaron Collegeman aaron@collegeman.net
+ * @author Alberto Salce alberto.salce@gmail.com
  */
 class Annotations {
-  
+	
+	const FX = '#/\*\*(.*)function\W+([a-z_\x7f-\xff][a-z0-9_\x7f-\xff]+)\(#misU';
+	const CLS = '#/\*\*(.*)class\W+([a-z_\x7f-\xff][a-z0-9_\x7f-\xff]+)\s\{#misU';
+	const ANN_WITHOUT_VAL = '#@([a-z_\x7f-\xff][a-z0-9_\x7f-\xff]+)\s#misU';
+	const ANN_WITH_VAL = '#@([a-z_\x7f-\xff][a-z0-9_\x7f-\xff]+)\s?\((.*)\)\s#misU';
+	
 	private static $cache = array();
-
-  	static function addClass($class, $file) { 
-		log_message('debug', "Class added to annotation cache: [$class]:$file");
-		self::$cache[strtolower($class)] = $file;
-  	}
-  
-	static function has($args = null) {
-		return self::has_one((is_array($args) ? $args : func_get_args()));
+	
+	private static $index = array();
+	
+	private $content;
+	
+	private $methods = array();
+	
+	private $classes = array();
+	
+	private $class;
+	
+	private $file;
+	
+	static function get($class, $file = null) {
+		if (!isset(self::$cache[$class]))
+			self::$cache[$class] = self::$index[$file] = new Annotations($class, $file);
+		
+		return self::$cache[$class];
 	}
 	
-	static function has_one($args = null) {
-		return self::get((is_array($args) ? $args : func_get_args()));
+	private function Annotations($class, $file) {
+		$this->class = array_pop(split('/', $class));
+		$this->file = $file;
+		
+		// if the file doesn't exist, let the caller handle it
+		if (!file_exists($file))
+			throw new Exception("Cannot read annotations: file does not exist [$file]");
+		// load the contents of the file	
+		$this->content = file_get_contents($file, FILE_BINARY);
+		// look for annotated functions
+		if (preg_match_all(self::FX, $this->content, $matches)) {
+			// for each annotated function
+			foreach($matches[2] as $i => $method) {
+				// grab the raw annotations
+				if ($raw = $matches[1][$i]) {
+					// parse the raw annotations
+					if (preg_match_all(self::ANN_WITH_VAL, $raw, $annotations)) {
+						// for each annotation
+						foreach($annotations[1] as $i => $name) {
+							// store the value
+							$this->add_method_annotation($method, $name, $annotations[2][$i]);
+						}
+					}
+					if (preg_match_all(self::ANN_WITHOUT_VAL, $raw, $annotations)) {
+						// for each annotation
+						foreach($annotations[1] as $name) {
+							$this->add_method_annotation($method, $name, true);
+						}
+					}
+				}
+			}
+		}
+		
+		// look for annotated classes
+		if (preg_match_all(self::CLS, $this->content, $matches)) {
+			// for each annotated class
+			foreach($matches[2] as $i => $class) {
+				// grab the raw annotations
+				if ($raw = $matches[1][$i]) {
+					// parse the raw annotations
+					if (preg_match_all(self::ANN_WITH_VAL, $raw, $annotations)) {
+						// for each annotation
+						foreach($annotations[1] as $i => $name) {
+							// store the value
+							$this->add_class_annotation($class, $name, $annotations[2][$i]);
+						}
+					}
+					if (preg_match_all(self::ANN_WITHOUT_VAL, $raw, $annotations)) {
+						// for each annotation
+						foreach($annotations[1] as $name) {
+							$this->add_class_annotation($class, $name, true);
+						}
+					}
+				}
+			}
+		}
 	}
 	
-	static function has_all($args = null) {
-		$args = (is_array($args) ? $args : func_get_args());
-		if (count($args) < 1)
-			return false;
+	function add_method_annotation($method, $name, $value) {
+		// make sure our method array is there
+		if (!isset($this->methods[$method])) {
+			$this->methods[$method] = array();
+			$this->methods[$method][$name] = array();
+		}
+		else if (!isset($this->methods[$method][$name])) {
+			$this->methods[$method][$name] = array();
+		}
+		
+		$this->methods[$method][$name][] = $value;
+	}
 	
-		// load requested annotations
-		$annotations = self::get($args);
-		// then process out function parameters:	
-			
-		// class is always first argument
-		$class = strtolower(array_shift($args));
+	function add_class_annotation($class, $name, $value) {
+		$class = strtolower($class);
 		
-		$annotation = null;
-		
-		// if two arguments remain, then we're looking for a method annotations
-		if (count($args) > 1) {
-			$method = $args[0];
-			$annotation = $args[1];
+		// make sure our method array is there
+		if (!isset($this->classes[$class])) {
+			$this->classes[$class] = array();
+			$this->classes[$class][$name] = array();
+		}
+		else if (!isset($this->classes[$class][$name])) {
+			$this->classes[$class][$name] = array();
 		}
 		
-		// if no arguments remain, then we return everything
-		else if (count($args) > 0){
-			$annotation = $args[0];
-		}
+		$this->classes[$class][$name][] = $value;
+	}
+	
+	function methods() {
+		return array_keys($this->methods);
+	}
+	
+	function for_method($method, $annotation = null) {
+		if (!$annotation)
+			return isset($this->methods[$method]) ? $this->methods[$method] : array();
+		
+		if (isset($this->methods[$method][$annotation]))
+			return $this->methods[$method][$annotation];
+		else
+			return array();
+	}
+	
+	function for_class($annotation = null, $class = null) {
+		$class = (!$class) ? strtolower($this->class) : strtolower($class);
 		
 		if (!$annotation)
-			return true; // does it have all of nothing? sure!
-		
-		if (!is_array($annotation))
-			$annotation = array($annotation);
-			
-		return count($annotation) == count($annotations);
-	}
+			return isset($this->classes[$class]) ? $this->classes[$class] : array();
 
-  	static function get($args = null) {
-		$args = (is_array($args) ? $args : func_get_args());
-		if (count($args) < 1)
-			return false;
-			
-		// class is always first argument
-		$class = strtolower(array_shift($args));
-		$method = null;
-		
-		$annotation = null;
-		
-		// if two arguments remain, then we're looking for a method annotations
-		if (count($args) > 1) {
-			$method = $args[0];
-			$annotation = $args[1];
-		}
-		
-		// if no arguments remain, then we return everything
-		else if (count($args) > 0){
-			$annotation = $args[0];
-		}
-	
-    	// make sure the annotations for this class have been processed
-		self::process($class);
-		
-		// return all annotations if no specific ones are mentioned.
-	    if (!$annotation)
-	      	return self::$cache[$class];
-      
-	   	if (!is_array($annotation))
-			$annotation = array($annotation);
-			
-		$ret = array();
-
-		if ($method && isset(self::$cache[$class]['methods'][$method]))
-			$annotations = self::$cache[$class]['methods'][$method];
-		else if (isset(self::$cache[$class]['__class__']))
-			$annotations = self::$cache[$class]['__class__'];
+		if (isset($this->classes[$class][$annotation]))
+			return $this->classes[$class][$annotation];
 		else
-			$annotations = array(); // none!
-		
-		foreach($annotation as $a) {
-			if (isset($annotations[$a]))
-				$ret[$a] = $annotations[$a];
-		}
-		
-		if (count(array_keys($ret)) > 1) {
-			return $ret;
-		}
-		else {
-			$keys = array_keys($ret);
-			return count($keys) ? $ret[$keys[0]] : null;
-		}
+			return array();
 	}
-
-  private static function process($class) {
-    
-    if (is_array(self::$cache[$class]))
-    return true;
-    
-    // read the php file.
-    $content = file_get_contents(self::$cache[$class]);
-    
-    // parse comments and function/class names
-    $class_notations = array();
-    
-    // NON GREEDY -- FIXES AN ISSUE WHERE PREG_MATCH CRASHES ON LONG STRINGS
-    preg_match_all('{((/\*([^*]|(\*+[^*/]))*\*+/)|(//.*))((\r?)\n.+|)}U',
-    $content,
-    $matches,
-    PREG_PATTERN_ORDER);
-    
-    foreach($matches[0] as $i => $comment) {
-      // comment must preced a function/class name
-      // look for @function
-      if(is_int(strpos($matches[2][$i],"@function"))) {
-        
-        // get function/class annotations
-        $annotations = array();
-        if (preg_match_all('/@(\w+) ?(\((.*)\))?/', $matches[2][$i], $annotation_matches)) {
-          $names = $annotation_matches[1];
-          $values = $annotation_matches[3];
-          foreach($names as $y => $name)
-          $annotations[$name] = trim($values[$y]);
-        }
-        
-        $function = $annotations['function'];
-        
-        // store our annotations into the proper array
-        if ($function == '__construct') {
-          $class_notations['__class__'] = $annotations;
-        } else if($function){
-          $class_notations['methods'][ $function ]  = $annotations;
-        }
-        
-      }
-    }
-    
-    // cache the results for future uses.
-    self::$cache[$class] = $class_notations;
-    return true;
-  }
+	
+	
 } 

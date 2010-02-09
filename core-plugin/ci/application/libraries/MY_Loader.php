@@ -99,7 +99,7 @@ class MY_Loader extends CI_Loader {
 		
 		if (!file_exists($model_path = WPCI::active_app_path(FALSE).'/models/'.$path.$model.EXT)) 
 		{
-			if (!file_exists($model_path = APP_PATH.'/models/'.$path.$model.EXT)) {
+			if (!file_exists($model_path = APPPATH.'/models/'.$path.$model.EXT)) {
 				wp_die('Unable to locate the model you have specified: '.$model);
 			}	
 		}

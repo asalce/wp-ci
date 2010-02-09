@@ -337,39 +337,37 @@ class WPCI {
 				}
 
 				else if (stripos($entry, '.php') == strlen($entry)-4) {
-					$class = split("\.", $entry);
-					$class = $class[0];
+					$class = array_shift(split("\.", $entry));
 
-					Annotations::addClass($class, "$app_path/$entry");
+					$ann = Annotations::get("$app/$class", "$app_path/$entry");
 
-					$ann = Annotations::get($class);
-					if (isset($ann['methods'])) {
-						foreach($ann['methods'] as $method_name => $method) {
-
-							// administrative menus
-							if (isset($method['menu'])) {
-								self::add_menu($app, "$app_path/$entry", $class, $method_name, $method);
-							}
-
-							// submenus
-							if (isset($method['submenu'])) {
-								self::add_submenu($app, "$app_path/$entry", $class, $method_name, $method);
-							}
-							else if (isset($method['item'])) {
-								$method['submenu'] = $method['item'];
-								self::add_submenu($app, "$app_path/$entry", $class, $method_name, $method);
-							}
-
-							// submenus on specific pages
-							foreach(array('posts', 'media', 'links', 'pages', 'comments', 'appearance', 'plugins', 'users', 'tools', 'settings') as $p) {
-								if (isset($method[$p.'_item'])) {
-									self::add_submenu($app, "$app_path/$entry", $class, $method_name, $method, $p);
-								}
-							}
-
+					foreach($ann->methods() as $method) {
+						
+						$all_annotations = $ann->for_method($method);
+					
+						// administrative menus
+						if (count($menu = $ann->for_method($method, 'menu'))) {
+							self::add_menu($app, "$app_path/$entry", $class, $method, $all_annotations);
 						}
-					}
 
+						// submenus
+						if (count($submenu = $ann->for_method($method, 'submenu'))) {
+							self::add_submenu($app, "$app_path/$entry", $class, $method, $all_annotations);
+						}
+						else if (count($item = $ann->for_method($method, 'item'))) {
+							$all_annotations['submenu'] = $all_annotations['item'];
+							self::add_submenu($app, "$app_path/$entry", $class, $method_name, $all_annotations);
+						}
+
+						/*
+						// submenus on specific pages
+						foreach(array('posts', 'media', 'links', 'pages', 'comments', 'appearance', 'plugins', 'users', 'tools', 'settings') as $p) {
+							if (isset($method[$p.'_item'])) {
+								self::add_submenu($app, "$app_path/$entry", $class, $method_name, $method, $p);
+							}
+						}
+						*/
+					}
 				}
 			}
 		}
@@ -395,8 +393,8 @@ class WPCI {
 	
 	
 
-	static function add_menu($app, $path, $class, $method_name, $annotations) {
-		$args = wp_parse_args($annotations['menu'], array(
+	static function add_menu($app, $path, $class, $method_name, $ann) {
+		$args = wp_parse_args($ann['menu'][0], array(
 			'page_title' => 'My Menu',
 			'menu_title' => '',
 			'position' => null,
@@ -406,8 +404,8 @@ class WPCI {
 		if (!$args['menu_title'])
 			$args['menu_title'] = $args['page_title'];
 			
-		if (!$args['capability'] && isset($annotations['user_can']))
-			$args['capability'] = $annotations['user_can'];
+		if (!$args['capability'] && isset($ann['user_can']))
+			$args['capability'] = $ann['user_can'][0];
 		else
 			$args['capability'] = 'administrator'; // maybe overkill... ?
 			
@@ -423,7 +421,7 @@ class WPCI {
 		self::$app_index[$token] = array('app' => $app, 'app_path' => $path, 'class' => $class, 'method_name' => $method_name);
 		
 		$icon_url = '';
-		if ($icon = isset($annotations['icon']) ? $annotations['icon'] : null) {
+		if ($icon = isset($ann['icon']) ? $ann['icon'][0] : null) {
 			if (strncmp($icon, '/', 1) != 0 && strncmp($icon, 'http://', 7) != 0)
 				$icon_url = resource($icon, $app); 
 			else
@@ -445,8 +443,8 @@ class WPCI {
 		);
 	}
 	
-	static function add_submenu($app, $path, $class, $method_name, $annotations, $page = null) {
-		$args = wp_parse_args($annotations['submenu'], array(
+	static function add_submenu($app, $path, $class, $method_name, $ann, $page = null) {
+		$args = wp_parse_args($ann['submenu'][0], array(
 			'page_title' => 'My Menu Item',
 			'menu_title' => '',
 			'capability' => '',
@@ -456,8 +454,8 @@ class WPCI {
 		if (!$args['menu_title'])
 			$args['menu_title'] = $args['page_title'];
 			
-		if (!$args['capability'] && isset($annotations['user_can']))
-			$args['capability'] = $annotations['user_can'];
+		if (!$args['capability'] && isset($ann['user_can']))
+			$args['capability'] = $ann['user_can'][0];
 		else
 			$args['capability'] = 'administrator'; // maybe overkill... ?
 			
@@ -509,6 +507,11 @@ class WPCI {
 	static function execute_admin_fx() {
 		global $OUT;
 		echo $OUT->_display();
+	}
+	
+	
+	static function is_ajax() {
+		
 	}
 	
 	static function execute() {
@@ -586,6 +589,9 @@ class WPCI {
 			$BM->mark('controller_execution_time_( '.$class.' / '.$method.' )_start');
 
 			$CI = new $class();
+			
+			// add request method properties
+			$CI->method = strtoupper($_SERVER['REQUEST_METHOD']);
 
 			// Is this a scaffolding request?
 			if ($RTR->scaffolding_request === TRUE)
@@ -605,11 +611,11 @@ class WPCI {
 				$EXT->_call_hook('post_controller_constructor');
 
 				// make sure app class is at the top of the annotations stack
-				Annotations::addClass($RTR->fetch_class(), $app_path);
+				$ann = Annotations::get($RTR->fetch_app().'/'.$RTR->fetch_class(), $app_path);
 
 				// grab the title annotation, if defined
-				if ($title = Annotations::get($RTR->fetch_class(), $RTR->fetch_method(), 'title'))
-					WPCI::set_title($title);
+				if (count($title = $ann->for_method($RTR->fetch_method(), 'title')))
+					WPCI::set_title($title[0]);
 
 				// Is there a "remap" function?
 				if (method_exists($CI, '_remap'))
@@ -670,11 +676,25 @@ class WPCI {
 			{
 				$CI->db->close();
 			}
+			
+			// if this was an ajax request, then we display the output and terminate
+			if (WPCI::is_ajax()) {
+				$OUT->_display();
+				exit(0);
+			}
 		}
 	}
+  
+  public static function execute_custom($app,$controller,$method) {
+    $_REQUEST['a'] = $app;
+    $_REQUEST['c'] = $controller;
+    $_REQUEST['m'] = $method;
+    $_REQUEST['page'] = 'wp-ci';
+    self::execute_admin();
+  }
 	
 	private static function execute_admin() {
-		global $RTR, $CI, $EXT, $BM, $URI;
+		global $RTR, $CI, $EXT, $BM, $URI, $OUT;
 
 		// process annotations so that tokens are defined
 		WPCI::process_menu_annotations();
@@ -760,11 +780,13 @@ class WPCI {
 				$BM->mark('controller_execution_time_( '.$class.' / '.$method.' )_start');
 
 				$CI = new $class();
-
+				
+				$CI->method = strtoupper($_SERVER['REQUEST_METHOD']);
+				
 				$EXT->_call_hook('post_controller_constructor');
 
 				// make sure app class is at the top of the annotations stack
-				Annotations::addClass($class, $app_path);
+				$ann = Annotations::get("$app/$class", $app_path);
 
 				// Is there a "remap" function?
 				if (method_exists($CI, '_remap')) {
@@ -793,6 +815,12 @@ class WPCI {
 				if (class_exists('CI_DB') AND isset($CI->db)) {
 					$CI->db->close();
 				}	
+				
+				// if this was an ajax request, then we display the output and terminate
+				if (WPCI::is_ajax()) {
+					$OUT->_display();
+					exit(0);
+				}
 			}
 		}
 	}

@@ -234,7 +234,7 @@ endif;
  */
 if (!function_exists("redirect")):
 function redirect($path = null, $params = array()) {
-	if (!is_array($path) && preg_match('#^(https?:/)?/#i', $path)) {
+	if (!is_array($path) && preg_match('#^(\w+:/)?/#i', $path)) {
 		wp_redirect($path);
 		exit;
 	}
@@ -366,7 +366,7 @@ function wpci_parse_path($path = array(), $params = array(), $use_context = TRUE
 		if (wpci_get_ssl_enabled() != TRUE)
 			$path['secure'] = FALSE;
 		else
-			$path['secure'] = ( $_SERVER['HTTPS'] == 'on' );
+			$path['secure'] = ( isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'on' );
 		
 		// dump_code($path);
 				
@@ -588,7 +588,7 @@ function form_open($path = array(), $attributes = '', $hidden = array(), $use_va
 		$attributes .= ' method="post"';
 	}
 
-	if (is_array($path) || !preg_match('#^(https?:/)?/#i', $path)) {
+	if (is_array($path) || !preg_match('#^(\w+:/)?/#i', $path)) {
 		extract(get_link_to($path, array(), TRUE));
 	
 		if ($context == 'back') {
@@ -656,12 +656,14 @@ function form_open($path = array(), $attributes = '', $hidden = array(), $use_va
 	$form .= '>';
 	
 	if ($use_validation_engine) {
-		wp_enqueue_style('jquery-validation-engine', resource('css/validationEngine.jquery.css'));
-		wp_enqueue_script('jquery-validation-engine-lang', resource('js/jquery.validationEngine-en.js'), array('jquery'));
-		wp_enqueue_script('jquery-validation-engine', resource('js/jquery.validationEngine.js'), array('jquery-validation-engine-lang'));
+		wp_enqueue_style('jquery-validation-engine', resource('/css/validationEngine.jquery.css'));
+		wp_enqueue_script('jquery-validation-engine-lang', resource('/js/jquery.validationEngine-en.js'), array('jquery'));
+		wp_enqueue_script('jquery-validation-engine', resource('/js/jquery.validationEngine.js'), array('jquery-validation-engine-lang'));
 		$id = $attributes['id'];
 		$form .= "\n<script type=\"text/javascript\"> jQuery(function() { jQuery('#$form_id').validationEngine(); }); </script>";
 	}
+	
+	wp_enqueue_script('wpci-admin', resource('/js/admin.js'), array('jquery'));
 
 	if (is_array($hidden) AND count($hidden) > 0) {
 		$form .= form_hidden($hidden);
@@ -748,7 +750,7 @@ function wp_edit_link($ref = null, $link = null, $before = '', $after = '') {
 		$post->ID = $ref;
 	}
 	else if (is_string($ref)) {
-		if (preg_match('#^https?://#i', $ref)) { // custom link
+		if (preg_match('#^\w+://#i', $ref)) { // custom link
 			if ($link === null)
 				$link = __('Edit This');
 			$link = '<a class="post-edit-link" href="' . $ref . '" title="' . esc_attr( __( 'Edit This' ) ) . '">' . $link . '</a>';

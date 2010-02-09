@@ -34,6 +34,8 @@
 | the active record class
 */
 
+global $wpdb;
+
 $active_group = "wordpress";
 $active_record = TRUE;
 
@@ -42,7 +44,7 @@ $db['wordpress']['username'] = DB_USER;
 $db['wordpress']['password'] = DB_PASSWORD;
 $db['wordpress']['database'] = DB_NAME;
 $db['wordpress']['dbdriver'] = "mysql";
-$db['wordpress']['dbprefix'] = "";
+$db['wordpress']['dbprefix'] = $wpdb->prefix;
 $db['wordpress']['pconnect'] = TRUE;
 $db['wordpress']['db_debug'] = wpci_get_database_debugging_enabled();
 $db['wordpress']['cache_on'] = FALSE;
