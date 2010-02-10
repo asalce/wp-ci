@@ -1,3 +1,5 @@
+Test
+
 #Introduction to WP-CI
 
 I love Wordpress. But writing plug-ins for Wordpress could be easier and more structured.  There are a lot of plug-ins out there, all of them using Wordpress' smashing plugin API to create some great functionality.  But at the end of the day, the native API leaves me wanting more.
