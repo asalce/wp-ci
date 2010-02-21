@@ -188,10 +188,16 @@ class WPCI {
 	}
 
 	static function generate_rewrite_rules($wp_rewrite) {
-		$gateway = wpci_get_gateway();
-		$wp_rewrite->rules = array(
-			'^'.wpci_get_slug().'/.*' => 'index.php?pagename='.$gateway->post_name
-		) + $wp_rewrite->rules;
+		if ($gateway = wpci_get_gateway()) {
+			$wp_rewrite->rules = array(
+				'^'.wpci_get_slug().'/.*' => 'index.php?pagename='.$gateway->post_name
+			) + $wp_rewrite->rules;
+		}
+		else {
+			add_action('admin_notices', create_function('', "
+				return '<div class=\"error\"><p>Gateway page is missing. To restore, please disable and then enable your WP-CI or WP-CMSPLUS plugin.</p></div>'; 
+			"));
+		}	
 	}
 
 	static function rewrite_query_vars($vars) {
