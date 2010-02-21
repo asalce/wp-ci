@@ -31,6 +31,11 @@ table.widefat td.icon-button {
 	padding-bottom: 12px;
 }
 
+table.widefat tr.error td {
+	background-color: #FFCFD5;
+	color: red;
+}
+
 a.icon-button span {
 	display: block;
 	height: 16px;
@@ -48,6 +53,10 @@ a.icon-delete span {
 
 a.icon-media-browse span {
 	background-image: url('../img/media-browse.png');
+}
+
+a.icon-compose span {
+	background-image: url('../img/compose.png');
 }
 
 a.no-label span {

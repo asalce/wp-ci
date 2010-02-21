@@ -90,7 +90,7 @@ class MY_Model extends Model {
 	}
 	
 	/**
-	 * Load all of the record stored in this model.
+	 * Load all of the records stored in this model.
 	 */
 	final function getAll($order_by = null, $dir = "asc") {
 		if ($order_by) {

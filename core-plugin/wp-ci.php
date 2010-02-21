@@ -20,20 +20,19 @@
 
 /*
 Plugin Name: WP-CI
-Plugin URI: http://aaroncollegeman.com/projects/wp-ci
+Plugin URI: http://aaroncollegeman.com/projects/wordpress/wp-ci
 Description: Embed CodeIgniter(R) in WordPress, build plugins using MVC.
 Author: Aaron Collegeman
 Version: 1.0.0
 Author URI: http://aaroncollegeman.com
 */
 
+// marker constant
+define('HAS_WPCI', true);
+
 // absolute path to wp-ci src
-// these may be set in wp-config.php or wp-settings.php (for dev purposes)
-if (!defined('WPCI_FILE'))
-	define('WPCI_FILE', __FILE__);
-	
-if (!defined('WPCI_ROOT'))
-	define('WPCI_ROOT', dirname(__FILE__));
+if (!defined('WPCI_FILE')) define('WPCI_FILE', __FILE__);	
+if (!defined('WPCI_ROOT')) define('WPCI_ROOT', dirname(__FILE__));
 	
 // request methods
 define('GET', "GET");
@@ -46,11 +45,14 @@ require_once(WPCI_ROOT.'/WPCI.php');
 WPCI::add_actions();
 
 // load dependencies and support libraries
+
+/*
 if (!class_exists('clAPI')) 
 	require_once(WPCI_ROOT.'/lib/coreylib/coreylib.php');
 
 if (!class_exists('Spyc')) 
 	require_once(WPCI_ROOT.'/lib/spyc/spyc.php');
+//*/
 
 if (!class_exists('Annotations')) 
 	require_once(WPCI_ROOT.'/lib/annotations.php');
@@ -64,8 +66,5 @@ require_once(WPCI_ROOT.'/pluggable.php');
 
 // bootstrap CodeIgniter
 require_once(WPCI_ROOT.'/bootstrap.php');
-
-// call upon pluggable applications to register themselves
-// do_action('wpci_register_apps');
 
 log_message('debug', '+++| CodeIgniter is bootstrapped. Burn baby, burn. |+++');

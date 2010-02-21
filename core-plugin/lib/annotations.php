@@ -29,8 +29,8 @@
  */
 class Annotations {
 	
-	const FX = '#/\*\*(.*)function\W+([a-z_\x7f-\xff][a-z0-9_\x7f-\xff]+)\(#misU';
-	const CLS = '#/\*\*(.*)class\W+([a-z_\x7f-\xff][a-z0-9_\x7f-\xff]+)\s\{#misU';
+	const FX = '#(/\*\*[^{]+)function\W+([a-z_\x7f-\xff][a-z0-9_\x7f-\xff]+)\(#misU';
+	const CLS = '#(/\*\*.*)class\W+([a-z_\x7f-\xff][a-z0-9_\x7f-\xff]+)\b#misU';
 	const ANN_WITHOUT_VAL = '#@([a-z_\x7f-\xff][a-z0-9_\x7f-\xff]+)\s#misU';
 	const ANN_WITH_VAL = '#@([a-z_\x7f-\xff][a-z0-9_\x7f-\xff]+)\s?\((.*)\)\s#misU';
 	
@@ -63,7 +63,7 @@ class Annotations {
 		if (!file_exists($file))
 			throw new Exception("Cannot read annotations: file does not exist [$file]");
 		// load the contents of the file	
-		$this->content = file_get_contents($file, FILE_BINARY);
+		$this->content = file_get_contents($file);
 		// look for annotated functions
 		if (preg_match_all(self::FX, $this->content, $matches)) {
 			// for each annotated function
@@ -119,11 +119,16 @@ class Annotations {
 			$this->methods[$method] = array();
 			$this->methods[$method][$name] = array();
 		}
-		else if (!isset($this->methods[$method][$name])) {
-			$this->methods[$method][$name] = array();
+
+		if (is_bool($value)) {
+			$this->methods[$method][$name] = true;
 		}
-		
-		$this->methods[$method][$name][] = $value;
+		else {
+			if (!isset($this->methods[$method][$name])) {
+				$this->methods[$method][$name] = array();
+			}
+			$this->methods[$method][$name][] = $value;
+		}
 	}
 	
 	function add_class_annotation($class, $name, $value) {
@@ -134,11 +139,16 @@ class Annotations {
 			$this->classes[$class] = array();
 			$this->classes[$class][$name] = array();
 		}
-		else if (!isset($this->classes[$class][$name])) {
-			$this->classes[$class][$name] = array();
+
+		if (is_bool($value)) {
+			$this->classes[$class][$name] = true;
 		}
-		
-		$this->classes[$class][$name][] = $value;
+		else {
+			if (!isset($this->classes[$class][$name])) {
+				$this->classes[$class][$name] = array();
+			}
+			$this->classes[$class][$name][] = $value;
+		}
 	}
 	
 	function methods() {

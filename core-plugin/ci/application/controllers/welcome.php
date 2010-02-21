@@ -1,5 +1,7 @@
 <?php
-
+/**
+ * @user_can(administrator)
+ */
 class Welcome extends Controller {
 
 	function Welcome() { 

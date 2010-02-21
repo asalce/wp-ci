@@ -474,7 +474,6 @@ function get_link_to($path = array(), $params = array(), $return_array = FALSE) 
 		// the token is what is used to store menu references...
 		$token = "wp-ci/$application".$directory."$controller/$action";
 
-		$menu = null;
 		$host = 'admin.php';
 		if ($app = WPCI::find_app($token)) {
 			// FIXME: set host here...
@@ -507,7 +506,7 @@ function get_link_to($path = array(), $params = array(), $return_array = FALSE) 
 			
 			$url = "$host?page=$page";
 			
-			if (!$menu) {
+			if (!$app) {
 				$url .= "&a=$application&c=$controller&m=$action&d=$directory";
 			}
 			
@@ -656,9 +655,21 @@ function form_open($path = array(), $attributes = '', $hidden = array(), $use_va
 	$form .= '>';
 	
 	if ($use_validation_engine) {
-		wp_enqueue_style('jquery-validation-engine', resource('/css/validationEngine.jquery.css'));
-		wp_enqueue_script('jquery-validation-engine-lang', resource('/js/jquery.validationEngine-en.js'), array('jquery'));
-		wp_enqueue_script('jquery-validation-engine', resource('/js/jquery.validationEngine.js'), array('jquery-validation-engine-lang'));
+		// make sure that our localization helper has been loaded
+		$CI = &get_instance();
+		if ($CI) {
+			$CI->load->helper('localization');
+			$locale = substr(locale(), 0, 2);
+		}
+		else {
+			$locale = 'en';
+		}
+		
+		wp_enqueue_script("jquery-ve-$locale", resource("/js/jquery.ve-$locale.js"), array('jquery'));
+		wp_enqueue_script('jquery-ve', resource('/js/jquery.ve.js'), array("jquery-ve-$locale"));
+
+		wp_enqueue_style('jquery-ve', resource('/css/ve.jquery.css'));
+
 		$id = $attributes['id'];
 		$form .= "\n<script type=\"text/javascript\"> jQuery(function() { jQuery('#$form_id').validationEngine(); }); </script>";
 	}

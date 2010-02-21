@@ -18,8 +18,6 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-// requires localization helper
-// POOR, poor form...
 $CI = &get_instance();
 $CI->load->helper('localization');
 

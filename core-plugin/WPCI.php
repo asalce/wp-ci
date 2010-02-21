@@ -98,6 +98,19 @@ class WPCI {
 		add_filter('page_template', 				array('WPCI', 'template'));
 		add_action('admin_menu', 					array('WPCI', 'admin_menu'));
 		add_action('plugins_loaded', 				array('WPCI', 'execute'));
+		
+		// disable WP core updates (care of http://lud.icro.us/disable-wordpress-core-update/)
+		# 2.3 to 2.7:
+		add_action( 'init', create_function( '$a', "remove_action( 'init', 'wp_version_check' );" ), 2 );
+		add_filter( 'pre_option_update_core', create_function( '$a', "return null;" ) );
+
+		# 2.8 to 3.0:
+		remove_action( 'wp_version_check', 'wp_version_check' );
+		remove_action( 'admin_init', '_maybe_update_core' );
+		add_filter( 'pre_transient_update_core', create_function( '$a', "return null;" ) );
+
+		# 3.0:
+		add_filter( 'pre_site_transient_update_core', create_function( '$a', "return null;" ) );
 	}
 	
 	private static function template_exists($file) {
@@ -510,16 +523,10 @@ class WPCI {
 	}
 	
 	
-	static function is_ajax() {
-		
-	}
-	
 	static function execute() {
-  
-    // MOVED HERE FROM wp-ci.php
-    // call upon pluggable applications to register themsevles
-    do_action('wpci_register_apps');
-    
+		// call upon pluggable applications to register themselves
+		do_action('wpci_register_apps');
+		
 		log_message('debug', 'Firing-up the engines: processing'.(is_admin() ? ' admin ' : ' ').'request.');
 		
 		if (is_admin()) {
@@ -563,10 +570,49 @@ class WPCI {
 			if (!class_exists($class)) {
 				wp_die("I can't find <b>{$class}/{$method}</b>.");
 			}
-
+			
+			// make sure app class is at the top of the annotations stack
+			$ann = Annotations::get($RTR->fetch_app().'/'.$RTR->fetch_class(), $app_path);
+			
+			// evaluate permissions, but only when they are specified for evaluation
+			$user_can = true;
+			
+			if (count($ann->for_class('user_must') + $ann->for_class('user_can') + $ann->for_method($method, 'user_must') + $ann->for_method($method, 'user_can'))) {
+				// first, test all user_must annotations
+				foreach($ann->for_class('user_must') as $cap) {
+					if (!current_user_can($cap)) {
+						$user_can = false;
+					 	break;
+					}	
+				}
+			
+				// next, test for method
+				if ($user_can) {
+					foreach($ann->for_method($method, 'user_must') as $cap) {
+						if (!current_user_can($cap)) {
+							$user_can = false;
+							break;
+						}
+					}
+				
+					// then, test user_can
+					if ($user_can) {
+						$user_can = false;
+					
+						foreach($ann->for_class('user_can') as $cap) {
+							$user_can = $user_can || current_user_can($cap);
+						}
+						foreach($ann->for_method($method, 'user_can') as $cap) {
+							$user_can = $user_can || current_user_can($cap);
+						}
+					}
+				}
+			}
+			
 			if ($method == 'controller'
 				OR strncmp($method, '_', 1) == 0
 				OR in_array(strtolower($method), array_map('strtolower', get_class_methods('Controller')))
+				OR !$user_can
 				)
 			{
 				wp_die("You're not allowed to do <b>{$class}/{$method}</b>.");
@@ -593,6 +639,9 @@ class WPCI {
 			// add request method properties
 			$CI->method = strtoupper($_SERVER['REQUEST_METHOD']);
 
+			$is_ajax = $ann->for_class('ajax') || $ann->for_method($method, 'ajax');
+			$ajax_content = null;
+
 			// Is this a scaffolding request?
 			if ($RTR->scaffolding_request === TRUE)
 			{
@@ -609,9 +658,6 @@ class WPCI {
 				 * ------------------------------------------------------
 				 */
 				$EXT->_call_hook('post_controller_constructor');
-
-				// make sure app class is at the top of the annotations stack
-				$ann = Annotations::get($RTR->fetch_app().'/'.$RTR->fetch_class(), $app_path);
 
 				// grab the title annotation, if defined
 				if (count($title = $ann->for_method($RTR->fetch_method(), 'title')))
@@ -646,7 +692,9 @@ class WPCI {
 
 					// Call the requested method.
 					// Any URI segments present (besides the class/function) will be passed to the method for convenience
+					if ($is_ajax) ob_start();
 					call_user_func_array(array(&$CI, $method), array_slice($URI->rsegments, 2));
+					
 				}
 			}
 
@@ -678,20 +726,14 @@ class WPCI {
 			}
 			
 			// if this was an ajax request, then we display the output and terminate
-			if (WPCI::is_ajax()) {
+			if ($is_ajax) {
+				header('Content-Type: application/json', true);
+				echo $ajax_content;
 				$OUT->_display();
 				exit(0);
 			}
 		}
 	}
-  
-  public static function execute_custom($app,$controller,$method) {
-    $_REQUEST['a'] = $app;
-    $_REQUEST['c'] = $controller;
-    $_REQUEST['m'] = $method;
-    $_REQUEST['page'] = 'wp-ci';
-    self::execute_admin();
-  }
 	
 	private static function execute_admin() {
 		global $RTR, $CI, $EXT, $BM, $URI, $OUT;
@@ -760,16 +802,55 @@ class WPCI {
 				$RTR->set_class($class);
 				$RTR->set_method($method);
 				$RTR->set_directory($directory);
-
+				
 				$BM->mark('loading_time_base_classes_end');
 
 				if (!class_exists($class)) {
 					wp_die("I can't find <b>{$class}/{$method}</b>.");
 				}
 
+				// make sure app class is at the top of the annotations stack
+				$ann = Annotations::get("$app/$class", $app_path);
+				
+				// evaluate permissions, but only when they are specified for evaluation
+				$user_can = true;
+				
+				if (count($ann->for_class('user_must') + $ann->for_class('user_can') + $ann->for_method($method, 'user_must') + $ann->for_method($method, 'user_can'))) {
+					// first, test all user_must annotations
+					foreach($ann->for_class('user_must') as $cap) {
+						if (!current_user_can($cap)) {
+							$user_can = false;
+						 	break;
+						}	
+					}
+				
+					// next, test for method
+					if ($user_can) {
+						foreach($ann->for_method($method, 'user_must') as $cap) {
+							if (!current_user_can($cap)) {
+								$user_can = false;
+								break;
+							}
+						}
+					
+						// then, test user_can
+						if ($user_can) {
+							$user_can = false;
+						
+							foreach($ann->for_class('user_can') as $cap) {
+								$user_can = $user_can || current_user_can($cap);
+							}
+							foreach($ann->for_method($method, 'user_can') as $cap) {
+								$user_can = $user_can || current_user_can($cap);
+							}
+						}
+					}
+				}
+				
 				if ($method == 'controller'
 					OR strncmp($method, '_', 1) == 0
 					OR in_array(strtolower($method), array_map('strtolower', get_class_methods('Controller')))
+					OR !$user_can
 					)
 				{
 					wp_die("You're not allowed to do <b>{$class}/{$method}</b>.");
@@ -785,9 +866,13 @@ class WPCI {
 				
 				$EXT->_call_hook('post_controller_constructor');
 
-				// make sure app class is at the top of the annotations stack
-				$ann = Annotations::get("$app/$class", $app_path);
-
+				// ajax annotation = no header
+				if ($is_ajax = $ann->for_class('ajax') || $ann->for_method($method, 'ajax')) {
+					$_GET['noheader'] = 1;
+				}
+				
+				$ajax_content = null;
+				
 				// Is there a "remap" function?
 				if (method_exists($CI, '_remap')) {
 					$CI->_remap($method);
@@ -803,7 +888,9 @@ class WPCI {
 
 					// Call the requested method.
 					// Any URI segments present (besides the class/function) will be passed to the method for convenience
+					if ($is_ajax) ob_start();
 					call_user_func_array(array(&$CI, $method), array());
+					if ($is_ajax) $ajax_content = ob_get_clean();
 				}
 
 				$BM->mark('controller_execution_time_( '.$class.' / '.$method.' )_end');
@@ -817,7 +904,9 @@ class WPCI {
 				}	
 				
 				// if this was an ajax request, then we display the output and terminate
-				if (WPCI::is_ajax()) {
+				if ($is_ajax) {
+					header('Content-type: application/json', true);
+					echo $ajax_content;
 					$OUT->_display();
 					exit(0);
 				}

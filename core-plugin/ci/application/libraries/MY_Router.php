@@ -61,6 +61,10 @@ class MY_Router extends CI_Router {
 		// Compile the segments into an array
 		$this->uri->_explode_segments();
 				
+		// bottom line: we don't do anything unless we're inside a CI request
+		if (!count($this->uri->segments) || !($gateway = $this->uri->segments[0]) || $gateway != wpci_get_slug())
+			return FALSE;
+				
 		// attempt to activate pluggable application (might not actually exist...)
 		WPCI::activate($this->uri->segments);
 		
@@ -73,7 +77,7 @@ class MY_Router extends CI_Router {
 		$this->routes = (!isset($route) OR ! is_array($route)) ? array() : $route;
 		
 		// Set the default controller so we can display it in the event
-		// the URI doesn't correlated to a valid controller.
+		// the URI doesn't correlate to a valid controller.
 		$this->default_controller = ( ! isset($this->routes['default_controller']) OR $this->routes['default_controller'] == '') ? FALSE : strtolower($this->routes['default_controller']);	
 		unset($this->routes['default_controller']);
 		
@@ -105,14 +109,14 @@ class MY_Router extends CI_Router {
 			$x = explode('/', $this->default_controller);
 			$this->set_class(end($x));
 			$this->set_method('index');
-			$this->_set_request(array_merge(array_filter(array('do', WPCI::get_active_app())), $x));
+			$this->_set_request(array_merge(array_filter(array(wpci_get_slug(), WPCI::get_active_app())), $x));
 		}
 		else
 		{
 			$this->set_class($this->default_controller);
 			$this->set_method('index');
 			// this is a little hairy!
-			$this->_set_request(array_merge(array_filter(array('do', WPCI::get_active_app())), array($this->default_controller, 'index')));
+			$this->_set_request(array_merge(array_filter(array(wpci_get_slug(), WPCI::get_active_app())), array($this->default_controller, 'index')));
 		}
 
 		// re-index the routed segments array so it starts with 1 rather than 0
@@ -138,9 +142,9 @@ class MY_Router extends CI_Router {
 	{
 		$segments = $this->_validate_request($segments);
 		
-		if (count($segments) == 0)
+		if ($segments === FALSE || count($segments) == 0)
 		{
-			return;
+			return FALSE;
 		}
 						
 		$this->set_class($segments[0]);
@@ -231,7 +235,6 @@ class MY_Router extends CI_Router {
 					$this->directory = '';
 					return array();
 				}
-			
 			}
 
 			return $segments;
