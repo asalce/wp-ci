@@ -228,9 +228,10 @@ class WPCI {
 
 	// make sure that our gateway page doesn't show up in standard page lists
 	static function list_pages_excludes($exclude) {
-		$gateway = wpci_get_gateway();
-		$exclude[] = $gateway->ID;
-		return $exclude;
+		if ($gateway = wpci_get_gateway()) {
+			$exclude[] = $gateway->ID;
+			return $exclude;
+		}
 	}
 
 	static function resource($resource, $app = null) {
